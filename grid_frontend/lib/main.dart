@@ -238,7 +238,7 @@ class _GameScreenState extends State<GameScreen> {
                   Text(_myName, style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(width: 8),
                 if (_myPhotoUrl.isNotEmpty)
-                  CircleAvatar(radius: 16, backgroundImage: NetworkImage(_myPhotoUrl))
+                  CircleAvatar(radius: 16, backgroundImage: NetworkImage('$backendUrl/avatar?url=${Uri.encodeComponent(_myPhotoUrl)}'))
                 else
                   const CircleAvatar(radius: 16, child: Icon(Icons.person, size: 16)),
                 const SizedBox(width: 12),
@@ -452,7 +452,7 @@ class _GameScreenState extends State<GameScreen> {
                               leading: item['photo_url'] != null && item['photo_url'].toString().isNotEmpty
                                 ? CircleAvatar(
                                     radius: 24,
-                                    backgroundImage: NetworkImage(item['photo_url']),
+                                    backgroundImage: NetworkImage('$backendUrl/avatar?url=${Uri.encodeComponent(item['photo_url'])}'),
                                   )
                                 : CircleAvatar(
                                     backgroundColor: hColor.withOpacity(0.2),

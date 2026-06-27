@@ -11,6 +11,22 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
+// Прокси для аватарок (чтобы обойти блокировку CORS в браузере)
+app.get('/avatar', async (req, res) => {
+    const url = req.query.url;
+    if (!url) return res.status(400).send('No url');
+    try {
+        const response = await fetch(url);
+        const buffer = await response.arrayBuffer();
+        res.set('Content-Type', response.headers.get('content-type'));
+        res.set('Access-Control-Allow-Origin', '*');
+        res.set('Cache-Control', 'public, max-age=86400'); // кэшируем на сутки
+        res.send(Buffer.from(buffer));
+    } catch (e) {
+        res.status(500).send('Error fetching avatar');
+    }
+});
+
 bot.start((ctx) => {
     ctx.reply('Добро пожаловать в Grid Lottery! 🎲\nНажми кнопку ниже, чтобы зайти в комнату:', {
         reply_markup: {
