@@ -4,7 +4,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 
 const token = '7675654779:AAGiBuHXrNzX_VFnd6n1MGig1o1N2w8O3tg'; 
-const webAppUrl = 'https://google.com'; 
+const webAppUrl = 'https://grid-lottery-game.web.app'; 
 
 const bot = new Telegraf(token);
 const app = express();
