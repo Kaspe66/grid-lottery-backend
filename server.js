@@ -94,6 +94,8 @@ function finishRoulette(winningIndex) {
 
         winnerHistory.unshift({
             username: winnerData.username,
+            first_name: winnerData.first_name,
+            photo_url: winnerData.photo_url,
             bank: bank,
             cell: winningIndex + 1,
             color: winnerData.color
@@ -158,7 +160,9 @@ io.on('connection', (socket) => {
             gameState[index] = {
                 username: socket.userData.username,
                 telegram_id: tgId,
-                color: socket.userData.color
+                color: socket.userData.color,
+                first_name: socket.userData.first_name,
+                photo_url: socket.userData.photo_url
             };
             
             io.emit('update_state', gameState);

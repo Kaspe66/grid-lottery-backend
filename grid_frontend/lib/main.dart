@@ -52,6 +52,9 @@ class _GameScreenState extends State<GameScreen> {
   List<dynamic> _gameState = List.filled(100, null);
   bool _isConnected = false;
 
+  String _myName = '';
+  String _myPhotoUrl = '';
+
   @override
   void initState() {
     super.initState();
@@ -71,6 +74,10 @@ class _GameScreenState extends State<GameScreen> {
         if (user != null) {
           username = user['username'] ?? 'Unknown';
           telegramId = (user['id'] ?? 123456789).toString();
+          if (mounted) setState(() {
+            _myName = user['first_name'] ?? username;
+            _myPhotoUrl = user['photo_url'] ?? '';
+          });
         }
       }
     } catch (e) {
@@ -80,7 +87,7 @@ class _GameScreenState extends State<GameScreen> {
     _myTelegramId = telegramId;
 
     // TODO: После деплоя бэкенда на Render/Railway, замените 'http://localhost:3000' на ваш новый URL
-    const String backendUrl = 'http://localhost:3000';
+    const String backendUrl = 'https://grid-lottery-backend.onrender.com';
 
     socket = IO.io(backendUrl, IO.OptionBuilder()
         .setTransports(['websocket'])
@@ -97,6 +104,8 @@ class _GameScreenState extends State<GameScreen> {
       socket.emit('join_game', {
         'username': username,
         'telegram_id': telegramId,
+        'first_name': _myName,
+        'photo_url': _myPhotoUrl,
       });
     });
 
@@ -222,10 +231,23 @@ class _GameScreenState extends State<GameScreen> {
         leadingWidth: 80,
         actions: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Icon(
-              _isConnected ? Icons.wifi : Icons.wifi_off,
-              color: _isConnected ? Colors.green : Colors.redAccent,
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              children: [
+                if (_myName.isNotEmpty)
+                  Text(_myName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(width: 8),
+                if (_myPhotoUrl.isNotEmpty)
+                  CircleAvatar(radius: 16, backgroundImage: NetworkImage(_myPhotoUrl))
+                else
+                  const CircleAvatar(radius: 16, child: Icon(Icons.person, size: 16)),
+                const SizedBox(width: 12),
+                Icon(
+                  _isConnected ? Icons.wifi : Icons.wifi_off,
+                  color: _isConnected ? Colors.green : Colors.redAccent,
+                  size: 16,
+                ),
+              ],
             ),
           )
         ],
@@ -427,16 +449,21 @@ class _GameScreenState extends State<GameScreen> {
                             ),
                             child: ListTile(
                               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                              leading: CircleAvatar(
-                                backgroundColor: hColor.withOpacity(0.2),
-                                radius: 24,
-                                child: Text(
-                                  item['username'].toString().substring(0, 1).toUpperCase(),
-                                  style: TextStyle(color: hColor, fontWeight: FontWeight.w900, fontSize: 20),
-                                ),
-                              ),
+                              leading: item['photo_url'] != null && item['photo_url'].toString().isNotEmpty
+                                ? CircleAvatar(
+                                    radius: 24,
+                                    backgroundImage: NetworkImage(item['photo_url']),
+                                  )
+                                : CircleAvatar(
+                                    backgroundColor: hColor.withOpacity(0.2),
+                                    radius: 24,
+                                    child: Text(
+                                      item['username'].toString().substring(0, 1).toUpperCase(),
+                                      style: TextStyle(color: hColor, fontWeight: FontWeight.w900, fontSize: 20),
+                                    ),
+                                  ),
                               title: Text(
-                                item['username'].toString(),
+                                item['first_name'] ?? item['username'].toString(),
                                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               subtitle: Text(
