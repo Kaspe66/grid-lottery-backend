@@ -31,6 +31,25 @@ let gameState = Array(100).fill(null);
 let balances = {}; 
 let winnerHistory = []; // Массив истории: { username, bank, cell }
 
+const DB_URL = 'https://grid-lottery-game-default-rtdb.firebaseio.com/balances.json';
+
+// Загрузка балансов при старте сервера
+fetch(DB_URL)
+    .then(res => res.json())
+    .then(data => {
+        if (data) balances = data;
+        console.log('Балансы успешно загружены из БД.');
+    })
+    .catch(err => console.error('Ошибка загрузки базы данных:', err));
+
+function saveBalances() {
+    fetch(DB_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(balances)
+    }).catch(err => console.error('Ошибка сохранения базы данных:', err));
+}
+
 let gamePhase = 'BETTING'; 
 let timeLeft = BETTING_TIME;
 let bank = 0;
@@ -90,6 +109,7 @@ function finishRoulette(winningIndex) {
         } else {
             balances[winnerData.telegram_id] = 1000 + bank; 
         }
+        saveBalances();
         io.emit('balances_update', balances);
 
         winnerHistory.unshift({
@@ -136,6 +156,7 @@ io.on('connection', (socket) => {
 
         if (balances[tgId] === undefined) {
             balances[tgId] = 1000;
+            saveBalances();
         }
 
         socket.emit('init_state', gameState);
@@ -156,6 +177,7 @@ io.on('connection', (socket) => {
         if (userBalance >= CELL_PRICE) {
             balances[tgId] -= CELL_PRICE; 
             bank += CELL_PRICE;           
+            saveBalances();
             
             gameState[index] = {
                 username: socket.userData.username,
