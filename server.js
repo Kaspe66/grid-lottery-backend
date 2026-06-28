@@ -250,6 +250,46 @@ io.on('connection', (socket) => {
         playersCount: r.players.size
     })));
 
+    socket.on('auth', (userData, callback) => {
+        if (!userData || !userData.initData) {
+            if (callback) callback({ success: false, message: 'Доступ только через Telegram' });
+            return;
+        }
+        
+        const isValid = validateInitData(userData.initData, token);
+        if (!isValid) {
+            if (callback) callback({ success: false, message: 'Ошибка подписи Telegram' });
+            return;
+        }
+
+        let authUser = null;
+        let tgId = userData.telegram_id;
+        try {
+            const parsedData = new URLSearchParams(userData.initData);
+            authUser = JSON.parse(parsedData.get('user'));
+            tgId = authUser.id.toString();
+        } catch (e) {
+            // fallback
+        }
+
+        socket.userData = {
+            telegram_id: tgId,
+            username: userData.username || 'User',
+            first_name: authUser ? authUser.first_name : '',
+            photo_url: authUser ? authUser.photo_url : '',
+            color: userData.color || '#FFFFFF',
+            initData: userData.initData
+        };
+
+        if (!users[tgId]) {
+            users[tgId] = createUserObject(1000);
+            saveUsers();
+        }
+
+        socket.emit('users_update', users);
+        if (callback) callback({ success: true });
+    });
+
     socket.on('join_room', (data, callback) => {
         const { roomId, userData } = data;
         const room = getRoom(roomId);

@@ -177,6 +177,16 @@ class _MainScreenState extends State<MainScreen> {
       if (mounted) setState(() {
         _isConnected = true;
       });
+      socket.emitWithAck('auth', {
+        'initData': _myInitData,
+        'telegram_id': _myTelegramId,
+        'username': _myName,
+        'color': '#FFFFFF'
+      }, ack: (response) {
+        if (response != null && response['success'] == true) {
+          print("Authenticated successfully");
+        }
+      });
     });
 
     socket.on('rooms_list', (data) {
