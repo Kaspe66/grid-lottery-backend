@@ -418,7 +418,7 @@ class _MainScreenState extends State<MainScreen> {
         title: Text(titles[_currentIndex], style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2)),
         centerTitle: true,
       ),
-      body: Container(
+      body: Stack(children: [ Container(
         decoration: const BoxDecoration(
           gradient: RadialGradient(
             colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
@@ -483,8 +483,7 @@ class _GameScreenState extends State<GameScreen> {
   List<dynamic> _roomPlayers = [];
 
   
-  List<dynamic> _chatMessages = [];
-  final TextEditingController _chatController = TextEditingController();
+  List<Widget> _floatingEmojis = [];
 @override
   void initState() {
     super.initState();
@@ -509,10 +508,23 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _setupSocketListeners() {
-    widget.socket.on('chat_message', (data) {
+    widget.socket.on('emoji_message', (data) {
       if (mounted) setState(() {
-        _chatMessages.insert(0, data);
-        if (_chatMessages.length > 50) _chatMessages.removeLast();
+        final key = UniqueKey();
+        // Generate pseudo-random X between 20 and 300
+        double startX = 20 + (DateTime.now().millisecondsSinceEpoch % 280).toDouble();
+        _floatingEmojis.add(
+          AnimatedEmoji(
+            key: key,
+            emoji: data['emoji'] ?? '👍',
+            startX: startX,
+          )
+        );
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) setState(() {
+            _floatingEmojis.removeWhere((w) => w.key == key);
+          });
+        });
       });
     });
 
@@ -604,7 +616,7 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void dispose() {
     widget.socket.emit('leave_room');
-    widget.socket.off('chat_message');
+    widget.socket.off('emoji_message');
     
     widget.socket.off('room_players');
     widget.socket.off('init_state');
@@ -620,82 +632,7 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   
-  Widget _buildChatModal() {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.6 + MediaQuery.of(context).viewInsets.bottom,
-      decoration: const BoxDecoration(
-        color: Color(0xFF1E293B),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Column(
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text('Чат Комнаты', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          ),
-          Expanded(
-            child: ListView.builder(
-              reverse: true,
-              itemCount: _chatMessages.length,
-              itemBuilder: (context, index) {
-                var msg = _chatMessages[index];
-                bool isMe = msg['telegram_id'] == widget.userData['telegram_id'];
-                return Align(
-                  alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isMe ? Colors.blueAccent.withOpacity(0.3) : Colors.white12,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                      children: [
-                        Text(msg['username'] ?? 'User', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white70)),
-                        const SizedBox(height: 4),
-                        Text(msg['text'] ?? ''),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _chatController,
-                    decoration: InputDecoration(
-                      hintText: 'Сообщение...',
-                      filled: true,
-                      fillColor: Colors.white.withOpacity(0.1),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send, color: Colors.blueAccent),
-                  onPressed: () {
-                    if (_chatController.text.trim().isNotEmpty) {
-                      widget.socket.emit('send_chat', _chatController.text.trim());
-                      _chatController.clear();
-                    }
-                  },
-                )
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
     String timerText = '';
     if (_phase == 'WAITING') {
       timerText = AppTranslations.t('waiting_players');
@@ -729,17 +666,7 @@ Widget build(BuildContext context) {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.chat),
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                backgroundColor: Colors.transparent,
-                isScrollControlled: true,
-                builder: (context) => _buildChatModal(),
-              );
-            },
-          ),
+
 
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -753,7 +680,7 @@ Widget build(BuildContext context) {
           )
         ],
       ),
-      body: Container(
+      body: Stack(children: [ Container(
         decoration: const BoxDecoration(
           gradient: RadialGradient(
             colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
@@ -1047,6 +974,81 @@ Widget build(BuildContext context) {
           ),
         ),
       ),
+      ..._floatingEmojis,
+      _buildEmojiPicker(),
+    ],),
+    );
+  }
+
+  Widget _buildEmojiPicker() {
+    final emojis = ['👍', '😂', '😭', '😡', '🎉', '🤑'];
+    return Positioned(
+      bottom: 20,
+      left: 16,
+      right: 16,
+      child: Container(
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: emojis.map((e) => GestureDetector(
+            onTap: () {
+              widget.socket.emit('send_emoji', e);
+            },
+            child: Text(e, style: const TextStyle(fontSize: 32)),
+          )).toList(),
+        ),
+      ),
     );
   }
 }
+
+class AnimatedEmoji extends StatefulWidget {
+  final String emoji;
+  final double startX;
+  const AnimatedEmoji({super.key, required this.emoji, required this.startX});
+  @override
+  State<AnimatedEmoji> createState() => _AnimatedEmojiState();
+}
+
+class _AnimatedEmojiState extends State<AnimatedEmoji> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _yAnimation;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2));
+    _yAnimation = Tween<double>(begin: 0, end: -300).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(CurvedAnimation(parent: _controller, curve: const Interval(0.5, 1.0)));
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Positioned(
+          left: widget.startX,
+          bottom: 100 - _yAnimation.value,
+          child: Opacity(
+            opacity: _opacityAnimation.value,
+            child: Text(widget.emoji, style: const TextStyle(fontSize: 40)),
+          ),
+        );
+      },
+    );
+  }
+}
+

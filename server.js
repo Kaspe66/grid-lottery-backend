@@ -405,14 +405,14 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('send_chat', (message) => {
-        if (!socket.roomId || !message) return;
-        io.to(socket.roomId).emit('chat_message', {
+    socket.on('send_emoji', (emoji) => {
+        if (!socket.roomId || !emoji) return;
+        io.to(socket.roomId).emit('emoji_message', {
             telegram_id: socket.userData.telegram_id,
             username: socket.userData.username,
             photo_url: socket.userData.photo_url,
             color: socket.userData.color,
-            text: message.substring(0, 200)
+            emoji: emoji
         });
     });
 
