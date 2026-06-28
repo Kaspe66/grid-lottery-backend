@@ -178,7 +178,7 @@ class _MainScreenState extends State<MainScreen> {
         _isConnected = true;
       });
       socket.emitWithAck('auth', {
-        'initData': _myInitData,
+        'initData': _initData,
         'telegram_id': _myTelegramId,
         'username': _myName,
         'color': '#FFFFFF'
