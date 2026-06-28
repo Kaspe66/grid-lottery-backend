@@ -379,7 +379,7 @@ class _MainScreenState extends State<MainScreen> {
         final memo = 'deposit_$_myTelegramId';
         final url = 'ton://transfer/$wallet?amount=$amountNano&text=$memo';
         try {
-          js.context['Telegram']['WebApp'].callMethod('openTelegramLink', [url]);
+          js.context['Telegram']['WebApp'].callMethod('openLink', [url]);
         } catch (e) {
           print(url);
         }
