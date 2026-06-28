@@ -2,6 +2,7 @@ const { Telegraf } = require('telegraf');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const crypto = require('crypto');
 
 const token = '7675654779:AAGiBuHXrNzX_VFnd6n1MGig1o1N2w8O3tg'; 
 const webAppUrl = 'https://grid-lottery-game.web.app'; 
@@ -70,6 +71,23 @@ function getColorForId(id) {
     return colors[Math.abs(hash) % colors.length];
 }
 
+function validateInitData(initData, token) {
+    if (!initData) return false;
+    const urlParams = new URLSearchParams(initData);
+    const hash = urlParams.get('hash');
+    if (!hash) return false;
+    
+    urlParams.delete('hash');
+    const params = Array.from(urlParams.entries());
+    params.sort((a, b) => a[0].localeCompare(b[0]));
+    const dataCheckString = params.map(([k, v]) => `${k}=${v}`).join('\n');
+    
+    const secretKey = crypto.createHmac('sha256', 'WebAppData').update(token).digest();
+    const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+    
+    return calculatedHash === hash;
+}
+
 // --- Игровые комнаты ---
 const rooms = [
     { id: 'room_5', name: 'Песочница', cellPrice: 5, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, winnerHistory: [], rouletteInterval: null },
@@ -103,10 +121,10 @@ function startRoulette(room) {
     
     let jumps = 0;
     const maxJumps = (ROULETTE_TIME * 1000) / 150; 
-    let currentCell = Math.floor(Math.random() * 100);
+    let currentCell = crypto.randomInt(0, 100);
 
     room.rouletteInterval = setInterval(() => {
-        currentCell = Math.floor(Math.random() * 100);
+        currentCell = crypto.randomInt(0, 100);
         io.to(room.id).emit('roulette_tick', currentCell);
         
         jumps++;
@@ -217,10 +235,41 @@ io.on('connection', (socket) => {
             return;
         }
 
-        socket.userData = userData;
-        const tgId = userData.telegram_id || socket.id; 
-        socket.userData.telegram_id = tgId;
-        socket.userData.color = getColorForId(tgId);
+        // ВАЛИДАЦИЯ ТЕЛЕГРАМ
+        if (!userData || !userData.initData) {
+            if (callback) callback({ success: false, message: 'Доступ только через Telegram' });
+            return;
+        }
+        
+        const isValid = validateInitData(userData.initData, token);
+        if (!isValid) {
+            if (callback) callback({ success: false, message: 'Ошибка подписи Telegram (Взлом)' });
+            return;
+        }
+
+        let authUser = null;
+        let tgId = socket.id;
+
+        try {
+            const urlParams = new URLSearchParams(userData.initData);
+            const userStr = urlParams.get('user');
+            if (userStr) {
+                authUser = JSON.parse(userStr);
+                tgId = authUser.id.toString();
+            }
+        } catch (e) {
+            console.error('Ошибка парсинга юзера', e);
+        }
+
+        // Если подпись валидна, берем реальные данные, игнорируя то, что прислал клиент напрямую
+        socket.userData = {
+            telegram_id: tgId,
+            username: authUser ? (authUser.username || authUser.first_name) : (userData.username || 'User'),
+            first_name: authUser ? authUser.first_name : (userData.first_name || 'User'),
+            photo_url: authUser ? authUser.photo_url : (userData.photo_url || ''),
+            color: getColorForId(tgId)
+        };
+        
         socket.roomId = roomId;
 
         if (balances[tgId] === undefined) {

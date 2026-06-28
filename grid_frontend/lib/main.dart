@@ -101,6 +101,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   String _myName = 'TestUser';
   String _myTelegramId = '123456789';
   String _myPhotoUrl = '';
+  String _initData = '';
 
   final String backendUrl = 'https://grid-lottery-backend.onrender.com';
 
@@ -115,6 +116,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
       if (js.context.hasProperty('Telegram')) {
         var tg = js.context['Telegram']['WebApp'];
         tg.callMethod('ready'); 
+        
+        _initData = tg['initData'] ?? '';
         
         var user = tg['initDataUnsafe']['user'];
         if (user != null) {
@@ -231,6 +234,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                               roomId: room['id'],
                               backendUrl: backendUrl,
                               userData: {
+                                'initData': _initData,
                                 'username': _myName, 
                                 'first_name': _myName,
                                 'telegram_id': _myTelegramId,
@@ -282,6 +286,7 @@ class _GameScreenState extends State<GameScreen> {
 
   List<dynamic> _history = [];
   List<dynamic> _gameState = List.filled(100, null);
+  List<dynamic> _roomPlayers = [];
 
   @override
   void initState() {
@@ -307,6 +312,12 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _setupSocketListeners() {
+    widget.socket.on('room_players', (data) {
+      if (mounted) setState(() {
+        if (data is List) _roomPlayers = data;
+      });
+    });
+
     widget.socket.on('init_state', (data) {
       if (mounted) setState(() {
         if (data is List) _gameState = data;
@@ -390,6 +401,7 @@ class _GameScreenState extends State<GameScreen> {
   void dispose() {
     widget.socket.emit('leave_room');
     
+    widget.socket.off('room_players');
     widget.socket.off('init_state');
     widget.socket.off('update_state');
     widget.socket.off('history_update');
@@ -501,6 +513,60 @@ class _GameScreenState extends State<GameScreen> {
                 ),
                 
                 const SizedBox(height: 30),
+
+                // Players in room list
+                if (_roomPlayers.isNotEmpty) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${AppTranslations.t('players')}: ${_roomPlayers.length} / 7',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 48,
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: _roomPlayers.length,
+                      itemBuilder: (context, index) {
+                        var p = _roomPlayers[index];
+                        String name = p['first_name'] ?? p['username'] ?? 'User';
+                        String initial = name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?';
+                        Color hColor = Colors.blueAccent;
+                        if (p['color'] != null) {
+                           hColor = Color(int.parse(p['color']));
+                        }
+                        
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                          child: Tooltip(
+                            message: name,
+                            child: CircleAvatar(
+                              radius: 20,
+                              backgroundColor: hColor.withOpacity(0.3),
+                              backgroundImage: p['photo_url'] != null && p['photo_url'].toString().isNotEmpty
+                                ? NetworkImage('${widget.backendUrl}/avatar?url=${Uri.encodeComponent(p['photo_url'])}')
+                                : null,
+                              child: p['photo_url'] == null || p['photo_url'].toString().isEmpty
+                                ? Text(initial, style: TextStyle(color: hColor, fontWeight: FontWeight.bold))
+                                : null,
+                            ),
+                          ),
+                        );
+                      }
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
                 
                 // Grid
                 Center(
