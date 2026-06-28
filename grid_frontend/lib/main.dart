@@ -7,6 +7,63 @@ void main() {
   runApp(const GridLotteryApp());
 }
 
+class AppTranslations {
+  static String langCode = 'en'; // default
+
+  static final Map<String, Map<String, String>> _translations = {
+    'en': {
+      'room_selection': 'ROOM SELECTION',
+      'players': 'Players',
+      'room_full': 'Room is full!',
+      'waiting_players': 'WAITING FOR PLAYERS',
+      'bets_placed': 'BETS ARE PLACED',
+      'winner_decided': 'Winner determined!',
+      'bank': 'Bank',
+      'not_enough_coins': 'Not enough coins! Price:',
+      'history_title': '🏆 VICTORY HISTORY (THIS ROOM)',
+      'win_amount': 'Win',
+      'cell': 'Cell',
+      'nobody_won': 'Cell {cell}. Nobody won!',
+      'player_won': '{username} won! Win: {bank} coins.',
+      'error_join': 'Error joining room',
+      'Песочница': 'Sandbox',
+      'Любитель': 'Amateur',
+      'Профи': 'Pro',
+      'Элита': 'Elite'
+    },
+    'ru': {
+      'room_selection': 'ВЫБОР КОМНАТЫ',
+      'players': 'Игроков',
+      'room_full': 'Комната заполнена!',
+      'waiting_players': 'ОЖИДАНИЕ ИГРОКОВ',
+      'bets_placed': 'СТАВКИ СДЕЛАНЫ',
+      'winner_decided': 'Победитель определен!',
+      'bank': 'Банк',
+      'not_enough_coins': 'Недостаточно монет! Стоимость:',
+      'history_title': '🏆 ИСТОРИЯ ПОБЕД (ЭТА КОМНАТА)',
+      'win_amount': 'Выигрыш',
+      'cell': 'Ячейка',
+      'nobody_won': 'Выпала ячейка {cell}. Никто не выиграл!',
+      'player_won': 'Победил {username}! Выигрыш: {bank} монет.',
+      'error_join': 'Ошибка входа в комнату',
+      'Песочница': 'Песочница',
+      'Любитель': 'Любитель',
+      'Профи': 'Профи',
+      'Элита': 'Элита'
+    }
+  };
+
+  static String t(String key, [Map<String, String>? params]) {
+    String str = _translations[langCode]?[key] ?? _translations['en']![key] ?? key;
+    if (params != null) {
+      params.forEach((k, v) {
+        str = str.replaceAll('{$k}', v);
+      });
+    }
+    return str;
+  }
+}
+
 class GridLotteryApp extends StatelessWidget {
   const GridLotteryApp({super.key});
 
@@ -62,6 +119,14 @@ class _LobbyScreenState extends State<LobbyScreen> {
         var user = tg['initDataUnsafe']['user'];
         if (user != null) {
           _myTelegramId = (user['id'] ?? 123456789).toString();
+          
+          String lang = user['language_code'] ?? 'en';
+          if (lang.startsWith('ru')) {
+            AppTranslations.langCode = 'ru';
+          } else {
+            AppTranslations.langCode = 'en';
+          }
+          
           if (mounted) setState(() {
             _myName = user['first_name'] ?? (user['username'] ?? 'Unknown');
             _myPhotoUrl = user['photo_url'] ?? '';
@@ -103,7 +168,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ВЫБОР КОМНАТЫ', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2)),
+        title: Text(AppTranslations.t('room_selection'), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2)),
         centerTitle: true,
       ),
       body: Container(
@@ -121,6 +186,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 itemBuilder: (context, index) {
                   var room = rooms[index];
                   bool isFull = room['playersCount'] >= room['maxPlayers'];
+                  String translatedRoomName = AppTranslations.t(room['name']);
 
                   return Card(
                     color: Colors.white.withOpacity(0.05),
@@ -129,13 +195,13 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       title: Text(
-                        room['name'],
+                        translatedRoomName,
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                       ),
                       subtitle: Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
-                          'Игроков: ${room['playersCount']} / ${room['maxPlayers']}',
+                          '${AppTranslations.t('players')}: ${room['playersCount']} / ${room['maxPlayers']}',
                           style: TextStyle(
                             color: isFull ? Colors.redAccent : Colors.greenAccent,
                           ),
@@ -152,7 +218,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       onTap: () {
                         if (isFull) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Комната заполнена!')),
+                            SnackBar(content: Text(AppTranslations.t('room_full'))),
                           );
                           return;
                         }
@@ -165,7 +231,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                               roomId: room['id'],
                               backendUrl: backendUrl,
                               userData: {
-                                'username': _myName, // Used for short names
+                                'username': _myName, 
                                 'first_name': _myName,
                                 'telegram_id': _myTelegramId,
                                 'photo_url': _myPhotoUrl,
@@ -232,7 +298,7 @@ class _GameScreenState extends State<GameScreen> {
       if (response != null && response['success'] == false) {
         if (mounted) {
            ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text(response['message'] ?? 'Ошибка входа в комнату')),
+             SnackBar(content: Text(response['message'] ?? AppTranslations.t('error_join'))),
            );
            Navigator.pop(context);
         }
@@ -269,7 +335,20 @@ class _GameScreenState extends State<GameScreen> {
         if (data['bank'] != null) _bank = data['bank'];
         if (data['cellPrice'] != null) _cellPrice = data['cellPrice'];
         
-        if (data['message'] != null) {
+        if (data['rewardData'] != null) {
+          var rd = data['rewardData'];
+          if (rd['hasWinner'] == true) {
+            _winnerMessage = AppTranslations.t('player_won', {
+              'username': rd['username'].toString(),
+              'bank': rd['bank'].toString(),
+            });
+          } else {
+             _winnerMessage = AppTranslations.t('nobody_won', {
+               'cell': rd['cell'].toString(),
+             });
+          }
+        } else if (data['message'] != null) {
+          // Fallback for backward compatibility
           _winnerMessage = data['message'];
         }
         
@@ -311,7 +390,6 @@ class _GameScreenState extends State<GameScreen> {
   void dispose() {
     widget.socket.emit('leave_room');
     
-    // Remove listeners specifically added for game screen to avoid duplicates if re-entering
     widget.socket.off('init_state');
     widget.socket.off('update_state');
     widget.socket.off('history_update');
@@ -327,13 +405,13 @@ class _GameScreenState extends State<GameScreen> {
   Widget build(BuildContext context) {
     String timerText = '';
     if (_phase == 'WAITING') {
-      timerText = 'ОЖИДАНИЕ ИГРОКОВ';
+      timerText = AppTranslations.t('waiting_players');
     } else if (_phase == 'BETTING') {
       timerText = '00:${_timeLeft.toString().padLeft(2, '0')}';
     } else if (_phase == 'ROULETTE') {
-      timerText = 'СТАВКИ СДЕЛАНЫ';
+      timerText = AppTranslations.t('bets_placed');
     } else if (_phase == 'REWARD') {
-      timerText = _winnerMessage.isNotEmpty ? _winnerMessage : 'Победитель определен!';
+      timerText = _winnerMessage.isNotEmpty ? _winnerMessage : AppTranslations.t('winner_decided');
     }
 
     return Scaffold(
@@ -362,7 +440,7 @@ class _GameScreenState extends State<GameScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Center(
               child: Text(
-                'Банк\n$_bank',
+                '${AppTranslations.t('bank')}\n$_bank',
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, height: 1.1),
               ),
@@ -495,7 +573,7 @@ class _GameScreenState extends State<GameScreen> {
                               } else if (_coins < _cellPrice) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Недостаточно монет! Стоимость: $_cellPrice'),
+                                    content: Text('${AppTranslations.t('not_enough_coins')} $_cellPrice'),
                                     duration: const Duration(seconds: 1),
                                   ),
                                 );
@@ -536,9 +614,9 @@ class _GameScreenState extends State<GameScreen> {
                 
                 // History Section
                 if (_history.isNotEmpty) ...[
-                   const Text(
-                     '🏆 ИСТОРИЯ ПОБЕД (ЭТА КОМНАТА)',
-                     style: TextStyle(
+                   Text(
+                     AppTranslations.t('history_title'),
+                     style: const TextStyle(
                        color: Colors.white,
                        fontSize: 14,
                        fontWeight: FontWeight.w800,
@@ -585,14 +663,14 @@ class _GameScreenState extends State<GameScreen> {
                                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               subtitle: Text(
-                                'Ячейка ${item['cell']}',
+                                '${AppTranslations.t('cell')} ${item['cell']}',
                                 style: TextStyle(color: Colors.white.withOpacity(0.5)),
                               ),
                               trailing: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  const Text('Выигрыш', style: TextStyle(color: Colors.white54, fontSize: 10)),
+                                  Text(AppTranslations.t('win_amount'), style: const TextStyle(color: Colors.white54, fontSize: 10)),
                                   Text(
                                     '+${item['bank']}',
                                     style: const TextStyle(color: Colors.greenAccent, fontSize: 18, fontWeight: FontWeight.w900),

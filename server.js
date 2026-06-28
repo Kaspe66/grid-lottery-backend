@@ -122,11 +122,20 @@ function finishRoulette(room, winningIndex) {
     room.timeLeft = REWARD_TIME;
     io.to(room.id).emit('roulette_finish', winningIndex);
     
-    let winnerMsg = `Выпала ячейка ${winningIndex + 1}. Никто не выиграл!`;
+    let rewardData = {
+        hasWinner: false,
+        cell: winningIndex + 1
+    };
+    
     const winnerData = room.gameState[winningIndex];
     
     if (winnerData) {
-        winnerMsg = `Победил ${winnerData.username}! Выигрыш: ${room.bank} монет.`;
+        rewardData = {
+            hasWinner: true,
+            username: winnerData.username,
+            bank: room.bank,
+            cell: winningIndex + 1
+        };
         if (balances[winnerData.telegram_id] !== undefined) {
             balances[winnerData.telegram_id] += room.bank;
         } else {
@@ -147,7 +156,7 @@ function finishRoulette(room, winningIndex) {
         io.to(room.id).emit('history_update', room.winnerHistory);
     }
     
-    io.to(room.id).emit('game_update', { phase: room.gamePhase, timeLeft: room.timeLeft, bank: room.bank, message: winnerMsg });
+    io.to(room.id).emit('game_update', { phase: room.gamePhase, timeLeft: room.timeLeft, bank: room.bank, rewardData: rewardData });
 
     setTimeout(() => {
         resetRoom(room);
