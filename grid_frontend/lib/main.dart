@@ -26,6 +26,17 @@ class AppTranslations {
       'nobody_won': 'Cell {cell}. Nobody won!',
       'player_won': '{username} won! Win: {bank} coins.',
       'error_join': 'Error joining room',
+      'leaderboard': 'Leaderboard',
+      'quests': 'Quests',
+      'profile': 'Profile',
+      'lobby': 'Lobby',
+      'daily_bonus': 'Daily Bonus',
+      'claim': 'Claim',
+      'invite_friend': 'Invite Friend',
+      'referral_desc': 'Get 500 coins for each friend!',
+      'games_played': 'Games Played',
+      'total_won': 'Total Won',
+      'chat': 'Chat',
       'Песочница': 'Sandbox',
       'Любитель': 'Amateur',
       'Профи': 'Pro',
@@ -46,6 +57,17 @@ class AppTranslations {
       'nobody_won': 'Выпала ячейка {cell}. Никто не выиграл!',
       'player_won': 'Победил {username}! Выигрыш: {bank} монет.',
       'error_join': 'Ошибка входа в комнату',
+      'leaderboard': 'Таблица Лидеров',
+      'quests': 'Задания',
+      'profile': 'Профиль',
+      'lobby': 'Лобби',
+      'daily_bonus': 'Ежедневный Бонус',
+      'claim': 'Получить',
+      'invite_friend': 'Пригласить Друга',
+      'referral_desc': 'Получи 500 монет за каждого!',
+      'games_played': 'Сыграно игр',
+      'total_won': 'Всего выиграно',
+      'chat': 'Чат',
       'Песочница': 'Песочница',
       'Любитель': 'Любитель',
       'Профи': 'Профи',
@@ -81,24 +103,27 @@ class GridLotteryApp extends StatelessWidget {
         ),
         fontFamily: 'Inter',
       ),
-      home: const LobbyScreen(),
+      home: const MainScreen(),
     );
   }
 }
 
-class LobbyScreen extends StatefulWidget {
-  const LobbyScreen({super.key});
+
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
 
   @override
-  State<LobbyScreen> createState() => _LobbyScreenState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
-class _LobbyScreenState extends State<LobbyScreen> {
+class _MainScreenState extends State<MainScreen> {
   late IO.Socket socket;
   List<dynamic> rooms = [];
+  Map<String, dynamic> users = {};
   bool _isConnected = false;
+  int _currentIndex = 0;
 
-  String _myName = 'TestUser';
+  String _myName = 'User';
   String _myTelegramId = '123456789';
   String _myPhotoUrl = '';
   String _initData = '';
@@ -160,6 +185,14 @@ class _LobbyScreenState extends State<LobbyScreen> {
       });
     });
 
+    socket.on('users_update', (data) {
+      if (mounted) setState(() {
+        if (data is Map) {
+          users = Map<String, dynamic>.from(data);
+        }
+      });
+    });
+
     socket.onDisconnect((_) {
       if (mounted) setState(() {
         _isConnected = false;
@@ -167,11 +200,222 @@ class _LobbyScreenState extends State<LobbyScreen> {
     });
   }
 
+  void _claimBonus() {
+    socket.emitWithAck('claim_bonus', null, ack: (data) {
+      if (data['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppTranslations.t('bonus_claimed'))));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(data['message'] ?? AppTranslations.t('bonus_error'))));
+      }
+    });
+  }
+
+  Widget _buildLobby() {
+    if (!_isConnected) return const Center(child: CircularProgressIndicator());
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: rooms.length,
+      itemBuilder: (context, index) {
+        var room = rooms[index];
+        bool isFull = room['playersCount'] >= room['maxPlayers'];
+        String translatedRoomName = AppTranslations.t(room['name']);
+
+        return Card(
+          color: Colors.white.withOpacity(0.05),
+          margin: const EdgeInsets.only(bottom: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            title: Text(
+              translatedRoomName,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                '${AppTranslations.t('players')}: ${room['playersCount']} / ${room['maxPlayers']}',
+                style: TextStyle(
+                  color: isFull ? Colors.redAccent : Colors.greenAccent,
+                ),
+              ),
+            ),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.monetization_on, color: Colors.amber, size: 20),
+                const SizedBox(height: 4),
+                Text('${room['cellPrice']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ],
+            ),
+            onTap: () {
+              if (isFull) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(AppTranslations.t('room_full'))),
+                );
+                return;
+              }
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GameScreen(
+                    socket: socket,
+                    roomId: room['id'],
+                    backendUrl: backendUrl,
+                    userData: {
+                      'initData': _initData,
+                      'username': _myName, 
+                      'first_name': _myName,
+                      'telegram_id': _myTelegramId,
+                      'photo_url': _myPhotoUrl,
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLeaderboard() {
+    var sortedUsers = users.values.toList();
+    sortedUsers.sort((a, b) => (b['balance'] ?? 0).compareTo(a['balance'] ?? 0));
+    
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: sortedUsers.length,
+      itemBuilder: (context, index) {
+        var u = sortedUsers[index];
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundColor: Colors.blueAccent.withOpacity(0.3),
+            backgroundImage: u['photo_url'] != null && u['photo_url'].toString().isNotEmpty
+                ? NetworkImage('$backendUrl/avatar?url=${Uri.encodeComponent(u['photo_url'])}')
+                : null,
+            child: u['photo_url'] == null || u['photo_url'].toString().isEmpty
+                ? Text('${index + 1}')
+                : null,
+          ),
+          title: Text(u['name'] ?? 'User', style: const TextStyle(fontWeight: FontWeight.bold)),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.monetization_on, color: Colors.amber, size: 16),
+              const SizedBox(width: 4),
+              Text('${u['balance'] ?? 0}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+        );
+      }
+    );
+  }
+
+  Widget _buildQuests() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              backgroundColor: Colors.greenAccent.withOpacity(0.2),
+            ),
+            icon: const Icon(Icons.card_giftcard, color: Colors.greenAccent),
+            label: Text(AppTranslations.t('daily_bonus'), style: const TextStyle(fontSize: 18)),
+            onPressed: _claimBonus,
+          ),
+          const SizedBox(height: 40),
+          Text(AppTranslations.t('invite_friend'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text(AppTranslations.t('referral_desc'), style: const TextStyle(color: Colors.white70)),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              backgroundColor: Colors.blueAccent.withOpacity(0.2),
+            ),
+            icon: const Icon(Icons.share, color: Colors.blueAccent),
+            label: const Text('Share Link', style: TextStyle(fontSize: 18)),
+            onPressed: () {
+               String link = 'https://t.me/GridLotteryBot/app?startapp=ref_$_myTelegramId';
+               try {
+                 js.context['Telegram']['WebApp'].callMethod('openTelegramLink', [link]);
+               } catch(e) {
+                 print(link);
+               }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfile() {
+    var myData = users[_myTelegramId];
+    if (myData == null) return const Center(child: CircularProgressIndicator());
+    var stats = myData['stats'] ?? {};
+    
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          CircleAvatar(
+            radius: 50,
+            backgroundColor: Colors.white12,
+            backgroundImage: _myPhotoUrl.isNotEmpty 
+                ? NetworkImage('$backendUrl/avatar?url=${Uri.encodeComponent(_myPhotoUrl)}') 
+                : null,
+            child: _myPhotoUrl.isEmpty ? const Icon(Icons.person, size: 50) : null,
+          ),
+          const SizedBox(height: 16),
+          Text(_myName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 32),
+          ListTile(
+            title: Text(AppTranslations.t('bank')),
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.monetization_on, color: Colors.amber),
+              const SizedBox(width: 8),
+              Text('${myData['balance'] ?? 0}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ]),
+          ),
+          ListTile(
+            title: Text(AppTranslations.t('games_played')),
+            trailing: Text('${stats['gamesPlayed'] ?? 0}', style: const TextStyle(fontSize: 18)),
+          ),
+          ListTile(
+            title: Text(AppTranslations.t('total_won')),
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.emoji_events, color: Colors.amber),
+              const SizedBox(width: 8),
+              Text('${stats['totalWon'] ?? 0}', style: const TextStyle(fontSize: 18)),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    List<Widget> pages = [
+      _buildLobby(),
+      _buildLeaderboard(),
+      _buildQuests(),
+      _buildProfile(),
+    ];
+
+    List<String> titles = [
+      AppTranslations.t('lobby'),
+      AppTranslations.t('leaderboard'),
+      AppTranslations.t('quests'),
+      AppTranslations.t('profile'),
+    ];
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppTranslations.t('room_selection'), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2)),
+        title: Text(titles[_currentIndex], style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2)),
         centerTitle: true,
       ),
       body: Container(
@@ -182,75 +426,25 @@ class _LobbyScreenState extends State<LobbyScreen> {
             center: Alignment.topCenter,
           ),
         ),
-        child: _isConnected
-            ? ListView.builder(
-                padding: const EdgeInsets.all(16.0),
-                itemCount: rooms.length,
-                itemBuilder: (context, index) {
-                  var room = rooms[index];
-                  bool isFull = room['playersCount'] >= room['maxPlayers'];
-                  String translatedRoomName = AppTranslations.t(room['name']);
-
-                  return Card(
-                    color: Colors.white.withOpacity(0.05),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      title: Text(
-                        translatedRoomName,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          '${AppTranslations.t('players')}: ${room['playersCount']} / ${room['maxPlayers']}',
-                          style: TextStyle(
-                            color: isFull ? Colors.redAccent : Colors.greenAccent,
-                          ),
-                        ),
-                      ),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.monetization_on, color: Colors.amber, size: 20),
-                          const SizedBox(height: 4),
-                          Text('${room['cellPrice']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        ],
-                      ),
-                      onTap: () {
-                        if (isFull) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(AppTranslations.t('room_full'))),
-                          );
-                          return;
-                        }
-                        
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => GameScreen(
-                              socket: socket,
-                              roomId: room['id'],
-                              backendUrl: backendUrl,
-                              userData: {
-                                'initData': _initData,
-                                'username': _myName, 
-                                'first_name': _myName,
-                                'telegram_id': _myTelegramId,
-                                'photo_url': _myPhotoUrl,
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                },
-              )
-            : const Center(
-                child: CircularProgressIndicator(color: Colors.blueAccent),
-              ),
+        child: pages[_currentIndex],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xFF0F172A),
+        selectedItemColor: Colors.amber,
+        unselectedItemColor: Colors.white54,
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        items: [
+          BottomNavigationBarItem(icon: const Icon(Icons.casino), label: AppTranslations.t('lobby')),
+          BottomNavigationBarItem(icon: const Icon(Icons.leaderboard), label: AppTranslations.t('leaderboard')),
+          BottomNavigationBarItem(icon: const Icon(Icons.card_giftcard), label: AppTranslations.t('quests')),
+          BottomNavigationBarItem(icon: const Icon(Icons.person), label: AppTranslations.t('profile')),
+        ],
       ),
     );
   }
@@ -288,7 +482,10 @@ class _GameScreenState extends State<GameScreen> {
   List<dynamic> _gameState = List.filled(100, null);
   List<dynamic> _roomPlayers = [];
 
-  @override
+  
+  List<dynamic> _chatMessages = [];
+  final TextEditingController _chatController = TextEditingController();
+@override
   void initState() {
     super.initState();
     _setupSocketListeners();
@@ -312,6 +509,13 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _setupSocketListeners() {
+    widget.socket.on('chat_message', (data) {
+      if (mounted) setState(() {
+        _chatMessages.insert(0, data);
+        if (_chatMessages.length > 50) _chatMessages.removeLast();
+      });
+    });
+
     widget.socket.on('room_players', (data) {
       if (mounted) setState(() {
         if (data is List) _roomPlayers = data;
@@ -400,6 +604,7 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void dispose() {
     widget.socket.emit('leave_room');
+    widget.socket.off('chat_message');
     
     widget.socket.off('room_players');
     widget.socket.off('init_state');
@@ -414,7 +619,83 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  
+  Widget _buildChatModal() {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.6 + MediaQuery.of(context).viewInsets.bottom,
+      decoration: const BoxDecoration(
+        color: Color(0xFF1E293B),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Column(
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text('Чат Комнаты', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          ),
+          Expanded(
+            child: ListView.builder(
+              reverse: true,
+              itemCount: _chatMessages.length,
+              itemBuilder: (context, index) {
+                var msg = _chatMessages[index];
+                bool isMe = msg['telegram_id'] == widget.userData['telegram_id'];
+                return Align(
+                  alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isMe ? Colors.blueAccent.withOpacity(0.3) : Colors.white12,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                      children: [
+                        Text(msg['username'] ?? 'User', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white70)),
+                        const SizedBox(height: 4),
+                        Text(msg['text'] ?? ''),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _chatController,
+                    decoration: InputDecoration(
+                      hintText: 'Сообщение...',
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.1),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send, color: Colors.blueAccent),
+                  onPressed: () {
+                    if (_chatController.text.trim().isNotEmpty) {
+                      widget.socket.emit('send_chat', _chatController.text.trim());
+                      _chatController.clear();
+                    }
+                  },
+                )
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+Widget build(BuildContext context) {
     String timerText = '';
     if (_phase == 'WAITING') {
       timerText = AppTranslations.t('waiting_players');
@@ -448,6 +729,18 @@ class _GameScreenState extends State<GameScreen> {
         ),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.chat),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.transparent,
+                isScrollControlled: true,
+                builder: (context) => _buildChatModal(),
+              );
+            },
+          ),
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Center(

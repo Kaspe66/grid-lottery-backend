@@ -29,7 +29,8 @@ app.get('/avatar', async (req, res) => {
 });
 
 bot.start((ctx) => {
-    ctx.reply('Добро пожаловать в Grid Lottery! 🎲\nНажми кнопку ниже, чтобы зайти в комнату:', {
+    const userId = ctx.from.id;
+    ctx.reply('Добро пожаловать в Grid Lottery! 🎲\n\nПриглашай друзей и получай 500 монет за каждого!\nТвоя ссылка:\nhttps://t.me/GridLotteryBot/app?startapp=ref_' + userId + '\n\nНажми кнопку ниже, чтобы зайти в комнату:', {
         reply_markup: {
             inline_keyboard: [
                 [{ text: '🕹 Открыть игру', web_app: { url: webAppUrl } }]
@@ -43,24 +44,48 @@ const BETTING_TIME = 60;
 const ROULETTE_TIME = 8; 
 const REWARD_TIME = 5;   
 
-let balances = {}; 
-const DB_URL = 'https://grid-lottery-game-default-rtdb.firebaseio.com/balances.json';
+let users = {}; 
+const DB_URL_USERS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/users.json';
+const DB_URL_BALANCES = 'https://grid-lottery-game-default-rtdb.firebaseio.com/balances.json';
 
-// Загрузка балансов при старте сервера
-fetch(DB_URL)
+function createUserObject(balance = 1000) {
+    return {
+        balance: balance,
+        stats: { gamesPlayed: 0, wins: 0, totalWon: 0, totalSpent: 0 },
+        lastBonusClaim: 0,
+        referredBy: null,
+        referralsCount: 0,
+        name: 'User',
+        photo_url: ''
+    };
+}
+
+fetch(DB_URL_USERS)
     .then(res => res.json())
     .then(data => {
-        if (data) balances = data;
-        console.log('Балансы успешно загружены из БД.');
+        if (data) {
+            users = data;
+            console.log('Пользователи загружены.');
+        } else {
+            fetch(DB_URL_BALANCES).then(r => r.json()).then(oldBalances => {
+                if (oldBalances) {
+                    for (let id in oldBalances) {
+                        users[id] = createUserObject(oldBalances[id]);
+                    }
+                    saveUsers();
+                    console.log('Миграция старых балансов завершена.');
+                }
+            });
+        }
     })
     .catch(err => console.error('Ошибка загрузки базы данных:', err));
 
-function saveBalances() {
-    fetch(DB_URL, {
+function saveUsers() {
+    fetch(DB_URL_USERS, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(balances)
-    }).catch(err => console.error('Ошибка сохранения базы данных:', err));
+        body: JSON.stringify(users)
+    }).catch(err => console.error('Ошибка сохранения БД:', err));
 }
 
 function getColorForId(id) {
@@ -154,13 +179,17 @@ function finishRoulette(room, winningIndex) {
             bank: room.bank,
             cell: winningIndex + 1
         };
-        if (balances[winnerData.telegram_id] !== undefined) {
-            balances[winnerData.telegram_id] += room.bank;
+        if (users[winnerData.telegram_id]) {
+            users[winnerData.telegram_id].balance += room.bank;
+            users[winnerData.telegram_id].stats.wins++;
+            users[winnerData.telegram_id].stats.totalWon += room.bank;
         } else {
-            balances[winnerData.telegram_id] = 1000 + room.bank; 
+            users[winnerData.telegram_id] = createUserObject(1000 + room.bank);
+            users[winnerData.telegram_id].stats.wins++;
+            users[winnerData.telegram_id].stats.totalWon += room.bank;
         }
-        saveBalances();
-        io.emit('balances_update', balances);
+        saveUsers();
+        io.emit('users_update', users);
 
         room.winnerHistory.unshift({
             username: winnerData.username,
@@ -272,10 +301,28 @@ io.on('connection', (socket) => {
         
         socket.roomId = roomId;
 
-        if (balances[tgId] === undefined) {
-            balances[tgId] = 1000;
-            saveBalances();
+        if (users[tgId] === undefined) {
+            users[tgId] = createUserObject(1000);
+            
+            // Проверка рефералов
+            if (userData.initData) {
+                const urlParams = new URLSearchParams(userData.initData);
+                const startParam = urlParams.get('start_param');
+                if (startParam && startParam.startsWith('ref_')) {
+                    const referrerId = startParam.split('_')[1];
+                    if (users[referrerId] && referrerId !== tgId) {
+                        users[tgId].referredBy = referrerId;
+                        users[referrerId].balance += 500;
+                        users[referrerId].referralsCount++;
+                    }
+                }
+            }
         }
+        
+        // Обновляем публичные данные
+        users[tgId].name = socket.userData.username;
+        users[tgId].photo_url = socket.userData.photo_url;
+        saveUsers();
 
         room.players.add(socket.id);
         room.playersData.set(socket.id, socket.userData);
@@ -290,7 +337,7 @@ io.on('connection', (socket) => {
         socket.emit('init_state', room.gameState);
         socket.emit('game_update', { phase: room.gamePhase, timeLeft: room.timeLeft, bank: room.bank, cellPrice: room.cellPrice });
         socket.emit('history_update', room.winnerHistory);
-        io.emit('balances_update', balances);
+        io.emit('users_update', users);
         
         broadcastRoomsUpdate();
         
@@ -313,12 +360,16 @@ io.on('connection', (socket) => {
         if (room.gameState[index] !== null) return; 
 
         const tgId = socket.userData.telegram_id;
-        let userBalance = balances[tgId] || 0;
+        let userRecord = users[tgId];
+        if (!userRecord) return;
+        let userBalance = userRecord.balance || 0;
 
         if (userBalance >= room.cellPrice) {
-            balances[tgId] -= room.cellPrice; 
+            userRecord.balance -= room.cellPrice; 
+            userRecord.stats.totalSpent += room.cellPrice;
+            userRecord.stats.gamesPlayed++;
             room.bank += room.cellPrice;           
-            saveBalances();
+            saveUsers();
             
             room.gameState[index] = {
                 username: socket.userData.username,
@@ -329,7 +380,7 @@ io.on('connection', (socket) => {
             };
             
             io.to(room.id).emit('update_state', room.gameState);
-            io.emit('balances_update', balances);
+            io.emit('users_update', users);
             io.to(room.id).emit('game_update', { phase: room.gamePhase, timeLeft: room.timeLeft, bank: room.bank, cellPrice: room.cellPrice }); 
         }
     });
@@ -337,6 +388,32 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         handleLeaveRoom(socket);
         console.log(`Игрок отключился: ${socket.id}`);
+    });
+
+    socket.on('claim_bonus', (callback) => {
+        const tgId = socket.userData.telegram_id;
+        if (!users[tgId]) return;
+        const now = Date.now();
+        if (now - users[tgId].lastBonusClaim > 86400000) {
+            users[tgId].balance += 100;
+            users[tgId].lastBonusClaim = now;
+            saveUsers();
+            io.emit('users_update', users);
+            if (callback) callback({ success: true, amount: 100 });
+        } else {
+            if (callback) callback({ success: false, message: 'Бонус уже получен' });
+        }
+    });
+
+    socket.on('send_chat', (message) => {
+        if (!socket.roomId || !message) return;
+        io.to(socket.roomId).emit('chat_message', {
+            telegram_id: socket.userData.telegram_id,
+            username: socket.userData.username,
+            photo_url: socket.userData.photo_url,
+            color: socket.userData.color,
+            text: message.substring(0, 200)
+        });
     });
 
     function handleLeaveRoom(socket) {
