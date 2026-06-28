@@ -483,7 +483,7 @@ io.on('connection', (socket) => {
 // ==========================================
 // ИНТЕГРАЦИЯ TON (ПОПОЛНЕНИЯ)
 // ==========================================
-const PROJECT_WALLET = 'UQXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'; // ЗАМЕНИТЕ НА СВОЙ КОШЕЛЕК
+const PROJECT_WALLET = 'UQBxu51QZAAzUfi1WJLSS6SOYuEDu9W18Bsjw4ZfCMtF_TUh'; // ЗАМЕНИТЕ НА СВОЙ КОШЕЛЕК
 const TRANSACTIONS_FILE = path.join(__dirname, 'transactions.json');
 let processedTransactions = new Set();
 

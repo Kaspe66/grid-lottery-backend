@@ -375,7 +375,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
       onPressed: () {
         final amountNano = gram * 1000000000;
-        final wallet = 'UQXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+        final wallet = 'UQBxu51QZAAzUfi1WJLSS6SOYuEDu9W18Bsjw4ZfCMtF_TUh';
         final memo = 'deposit_$_myTelegramId';
         final url = 'ton://transfer/$wallet?amount=$amountNano&text=$memo';
         try {
