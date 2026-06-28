@@ -430,21 +430,6 @@ io.on('connection', (socket) => {
         console.log(`Игрок отключился: ${socket.id}`);
     });
 
-    socket.on('claim_bonus', (callback) => {
-        const tgId = socket.userData.telegram_id;
-        if (!users[tgId]) return;
-        const now = Date.now();
-        if (now - users[tgId].lastBonusClaim > 86400000) {
-            users[tgId].balance += 100;
-            users[tgId].lastBonusClaim = now;
-            saveUsers();
-            io.emit('users_update', users);
-            if (callback) callback({ success: true, amount: 100 });
-        } else {
-            if (callback) callback({ success: false, message: 'Бонус уже получен' });
-        }
-    });
-
     socket.on('send_emoji', (emoji) => {
         if (!socket.roomId || !emoji) return;
         io.to(socket.roomId).emit('emoji_message', {

@@ -210,16 +210,6 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  void _claimBonus() {
-    socket.emitWithAck('claim_bonus', null, ack: (data) {
-      if (data['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppTranslations.t('bonus_claimed'))));
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(data['message'] ?? AppTranslations.t('bonus_error'))));
-      }
-    });
-  }
-
   Widget _buildLobby() {
     if (!_isConnected) return const Center(child: CircularProgressIndicator());
     return ListView.builder(
@@ -326,16 +316,7 @@ class _MainScreenState extends State<MainScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              backgroundColor: Colors.greenAccent.withOpacity(0.2),
-            ),
-            icon: const Icon(Icons.card_giftcard, color: Colors.greenAccent),
-            label: Text(AppTranslations.t('daily_bonus'), style: const TextStyle(fontSize: 18)),
-            onPressed: _claimBonus,
-          ),
-          const SizedBox(height: 40),
+
           Text(AppTranslations.t('invite_friend'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Text(AppTranslations.t('referral_desc'), style: const TextStyle(color: Colors.white70)),
