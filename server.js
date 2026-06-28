@@ -72,10 +72,10 @@ function getColorForId(id) {
 
 // --- Игровые комнаты ---
 const rooms = [
-    { id: 'room_5', name: 'Песочница', cellPrice: 5, maxPlayers: 7, players: new Set(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, winnerHistory: [], rouletteInterval: null },
-    { id: 'room_10', name: 'Любитель', cellPrice: 10, maxPlayers: 7, players: new Set(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, winnerHistory: [], rouletteInterval: null },
-    { id: 'room_25', name: 'Профи', cellPrice: 25, maxPlayers: 7, players: new Set(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, winnerHistory: [], rouletteInterval: null },
-    { id: 'room_50', name: 'Элита', cellPrice: 50, maxPlayers: 7, players: new Set(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, winnerHistory: [], rouletteInterval: null },
+    { id: 'room_5', name: 'Песочница', cellPrice: 5, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, winnerHistory: [], rouletteInterval: null },
+    { id: 'room_10', name: 'Любитель', cellPrice: 10, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, winnerHistory: [], rouletteInterval: null },
+    { id: 'room_25', name: 'Профи', cellPrice: 25, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, winnerHistory: [], rouletteInterval: null },
+    { id: 'room_50', name: 'Элита', cellPrice: 50, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, winnerHistory: [], rouletteInterval: null },
 ];
 
 function getRoom(id) {
@@ -229,6 +229,7 @@ io.on('connection', (socket) => {
         }
 
         room.players.add(socket.id);
+        room.playersData.set(socket.id, socket.userData);
         socket.join(roomId);
 
         // Если было ОЖИДАНИЕ и стало >= 2 игроков, запускаем таймер
@@ -246,6 +247,7 @@ io.on('connection', (socket) => {
         
         // Оповещаем остальных в комнате об обновлении фазы (если она сменилась)
         io.to(roomId).emit('game_update', { phase: room.gamePhase, timeLeft: room.timeLeft, bank: room.bank });
+        io.to(roomId).emit('room_players', Array.from(room.playersData.values()));
         
         if (callback) callback({ success: true });
     });
@@ -293,6 +295,7 @@ io.on('connection', (socket) => {
             const room = getRoom(socket.roomId);
             if (room) {
                 room.players.delete(socket.id);
+                room.playersData.delete(socket.id);
                 socket.leave(socket.roomId);
                 
                 // Если игроков стало меньше 2 и ставок еще нет, отменяем обратный отсчет
@@ -302,6 +305,7 @@ io.on('connection', (socket) => {
                     io.to(room.id).emit('game_update', { phase: room.gamePhase, timeLeft: room.timeLeft, bank: room.bank });
                 }
                 
+                io.to(room.id).emit('room_players', Array.from(room.playersData.values()));
                 broadcastRoomsUpdate();
             }
             socket.roomId = null;
