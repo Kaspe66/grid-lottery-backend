@@ -342,6 +342,65 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  
+  Widget _buildDepositDialog() {
+    return AlertDialog(
+      backgroundColor: const Color(0xFF1E293B),
+      title: Text(AppTranslations.t('deposit'), style: const TextStyle(color: Colors.white)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildDepositOption(1, 1000),
+          const SizedBox(height: 10),
+          _buildDepositOption(5, 5000),
+          const SizedBox(height: 10),
+          _buildDepositOption(10, 10000),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(AppTranslations.t('cancel'), style: const TextStyle(color: Colors.white54)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDepositOption(int gram, int coins) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blueAccent.withOpacity(0.2),
+        minimumSize: const Size(double.infinity, 50),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      onPressed: () {
+        final amountNano = gram * 1000000000;
+        final wallet = 'UQXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+        final memo = 'deposit_$_myTelegramId';
+        final url = 'ton://transfer/$wallet?amount=$amountNano&text=$memo';
+        try {
+          js.context['Telegram']['WebApp'].callMethod('openTelegramLink', [url]);
+        } catch (e) {
+          print(url);
+        }
+        Navigator.pop(context);
+      },
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('$gram Gram', style: const TextStyle(fontSize: 18, color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+          const Icon(Icons.arrow_forward, color: Colors.white54),
+          Row(
+            children: [
+              Text('$coins ', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.amber)),
+              const Icon(Icons.monetization_on, color: Colors.amber, size: 18),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
   Widget _buildProfile() {
     var myData = users[_myTelegramId];
     if (myData == null) return const Center(child: CircularProgressIndicator());
@@ -383,6 +442,23 @@ class _MainScreenState extends State<MainScreen> {
               Text('${stats['totalWon'] ?? 0}', style: const TextStyle(fontSize: 18)),
             ]),
           ),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+              backgroundColor: Colors.greenAccent.withOpacity(0.2),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            ),
+            icon: const Icon(Icons.account_balance_wallet, color: Colors.greenAccent),
+            label: Text(AppTranslations.t('deposit'), style: const TextStyle(fontSize: 20, color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => _buildDepositDialog(),
+              );
+            },
+          ),
+
         ],
       ),
     );

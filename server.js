@@ -479,6 +479,80 @@ io.on('connection', (socket) => {
     }
 });
 
+
+// ==========================================
+// ИНТЕГРАЦИЯ TON (ПОПОЛНЕНИЯ)
+// ==========================================
+const PROJECT_WALLET = 'UQXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'; // ЗАМЕНИТЕ НА СВОЙ КОШЕЛЕК
+const TRANSACTIONS_FILE = path.join(__dirname, 'transactions.json');
+let processedTransactions = new Set();
+
+if (fs.existsSync(TRANSACTIONS_FILE)) {
+    try {
+        const data = fs.readFileSync(TRANSACTIONS_FILE, 'utf8');
+        processedTransactions = new Set(JSON.parse(data));
+    } catch (err) {
+        console.error('Ошибка чтения transactions.json', err);
+    }
+}
+
+function saveTransactions() {
+    fs.writeFileSync(TRANSACTIONS_FILE, JSON.stringify(Array.from(processedTransactions)), 'utf8');
+}
+
+async function checkTonTransactions() {
+    if (PROJECT_WALLET.includes('XXXXX')) return; // Отключено, пока нет реального кошелька
+    
+    try {
+        const response = await fetch(`https://toncenter.com/api/v2/getTransactions?address=${PROJECT_WALLET}&limit=10`);
+        const data = await response.json();
+        
+        if (data.ok && data.result) {
+            let updated = false;
+            for (const tx of data.result) {
+                const hash = tx.transaction_id.hash;
+                if (processedTransactions.has(hash)) continue;
+                
+                processedTransactions.add(hash);
+                updated = true;
+                
+                const inMsg = tx.in_msg;
+                if (inMsg && inMsg.value && inMsg.message) {
+                    const value = Number(inMsg.value);
+                    const msg = inMsg.message.trim();
+                    
+                    if (msg.startsWith('deposit_')) {
+                        const tgId = msg.split('_')[1];
+                        
+                        // Курс: 1 Gram (1 000 000 000 nano) = 1000 игровых монет
+                        // Следовательно: 1000 монет / 1 000 000 000 = 0.000001
+                        // amountInCoins = value (в нано-граммах) / 1,000,000
+                        const amountInCoins = Math.floor(value / 1000000); 
+                        
+                        if (amountInCoins > 0) {
+                            if (!users[tgId]) {
+                                users[tgId] = createUserObject(1000);
+                            }
+                            users[tgId].balance += amountInCoins;
+                            console.log(`Успешное пополнение: Игрок ${tgId} получил ${amountInCoins} монет за ${value} nanoGram.`);
+                            saveUsers();
+                            io.emit('users_update', users); // Обновляем балансы у всех (включая самого игрока)
+                        }
+                    }
+                }
+            }
+            if (updated) {
+                saveTransactions();
+            }
+        }
+    } catch (e) {
+        console.error('Ошибка проверки транзакций TON:', e.message);
+    }
+}
+
+setInterval(checkTonTransactions, 15000); // Проверяем каждые 15 секунд
+// ==========================================
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Сервер запущен на порту ${PORT}.`);
