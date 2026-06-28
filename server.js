@@ -295,8 +295,12 @@ io.on('connection', (socket) => {
                 room.players.delete(socket.id);
                 socket.leave(socket.roomId);
                 
-                // Если после выхода игроков стало меньше 2, но раунд уже начат,
-                // мы просто даем ему закончиться (чтобы ставки не пропали).
+                // Если игроков стало меньше 2 и ставок еще нет, отменяем обратный отсчет
+                if (room.gamePhase === 'BETTING' && room.players.size < 2 && room.bank === 0) {
+                    room.gamePhase = 'WAITING';
+                    room.timeLeft = BETTING_TIME;
+                    io.to(room.id).emit('game_update', { phase: room.gamePhase, timeLeft: room.timeLeft, bank: room.bank });
+                }
                 
                 broadcastRoomsUpdate();
             }
