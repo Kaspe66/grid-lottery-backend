@@ -576,12 +576,12 @@ class _GameScreenState extends State<GameScreen> {
       });
     });
 
-    widget.socket.on('balances_update', (data) {
+    widget.socket.on('users_update', (data) {
       if (mounted) setState(() {
         if (data is Map) {
           var k = data[widget.userData['telegram_id']] ?? data[int.tryParse(widget.userData['telegram_id']) ?? -1];
-          if (k != null) {
-            _coins = (k as num).toInt();
+          if (k != null && k['balance'] != null) {
+            _coins = (k['balance'] as num).toInt();
           }
         }
       });
@@ -611,7 +611,7 @@ class _GameScreenState extends State<GameScreen> {
     widget.socket.off('update_state');
     widget.socket.off('history_update');
     widget.socket.off('game_update');
-    widget.socket.off('balances_update');
+    widget.socket.off('users_update');
     widget.socket.off('roulette_tick');
     widget.socket.off('roulette_finish');
     
