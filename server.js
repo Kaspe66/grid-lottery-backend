@@ -173,20 +173,27 @@ function finishRoulette(room, winningIndex) {
     const winnerData = room.gameState[winningIndex];
     
     if (winnerData) {
+        let commission = Math.floor(room.bank * 0.1);
+        let winAmount = room.bank - commission;
+
+        if (!users['_SYSTEM_']) users['_SYSTEM_'] = { balance: 0, stats: { totalWon: 0 } };
+        users['_SYSTEM_'].balance += commission;
+        users['_SYSTEM_'].stats.totalWon += commission;
+
         rewardData = {
             hasWinner: true,
             username: winnerData.username,
-            bank: room.bank,
+            bank: winAmount,
             cell: winningIndex + 1
         };
         if (users[winnerData.telegram_id]) {
-            users[winnerData.telegram_id].balance += room.bank;
+            users[winnerData.telegram_id].balance += winAmount;
             users[winnerData.telegram_id].stats.wins++;
-            users[winnerData.telegram_id].stats.totalWon += room.bank;
+            users[winnerData.telegram_id].stats.totalWon += winAmount;
         } else {
-            users[winnerData.telegram_id] = createUserObject(1000 + room.bank);
+            users[winnerData.telegram_id] = createUserObject(1000 + winAmount);
             users[winnerData.telegram_id].stats.wins++;
-            users[winnerData.telegram_id].stats.totalWon += room.bank;
+            users[winnerData.telegram_id].stats.totalWon += winAmount;
         }
         saveUsers();
         io.emit('users_update', users);
@@ -195,12 +202,20 @@ function finishRoulette(room, winningIndex) {
             username: winnerData.username,
             first_name: winnerData.first_name,
             photo_url: winnerData.photo_url,
-            bank: room.bank,
+            bank: winAmount,
             cell: winningIndex + 1,
             color: winnerData.color
         });
         if (room.winnerHistory.length > 10) room.winnerHistory.pop();
         io.to(room.id).emit('history_update', room.winnerHistory);
+    } else {
+        // Никто не выиграл - деньги уходят проекту
+        if (room.bank > 0) {
+            if (!users['_SYSTEM_']) users['_SYSTEM_'] = { balance: 0, stats: { totalWon: 0 } };
+            users['_SYSTEM_'].balance += room.bank;
+            users['_SYSTEM_'].stats.totalWon += room.bank;
+            saveUsers();
+        }
     }
     
     io.to(room.id).emit('game_update', { phase: room.gamePhase, timeLeft: room.timeLeft, bank: room.bank, rewardData: rewardData });
