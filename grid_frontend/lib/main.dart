@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'dart:js' as js;
-import 'dart:ui'; // Для BackdropFilter
+import 'dart:ui'; 
 
 void main() {
   runApp(const GridLotteryApp());
@@ -17,54 +17,43 @@ class GridLotteryApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0F172A), // Slate 900
+        scaffoldBackgroundColor: const Color(0xFF0F172A), 
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
         fontFamily: 'Inter',
       ),
-      home: const GameScreen(),
+      home: const LobbyScreen(),
     );
   }
 }
 
-class GameScreen extends StatefulWidget {
-  const GameScreen({super.key});
+class LobbyScreen extends StatefulWidget {
+  const LobbyScreen({super.key});
 
   @override
-  State<GameScreen> createState() => _GameScreenState();
+  State<LobbyScreen> createState() => _LobbyScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
-  int _coins = 1000;
-  int _bank = 0;
-  String _phase = 'BETTING';
-  int _timeLeft = 60;
-  String _winnerMessage = '';
-  int? _rouletteCell;
-  int? _winnerCell;
-
-  String _myTelegramId = ''; 
-  List<dynamic> _history = [];
-
+class _LobbyScreenState extends State<LobbyScreen> {
   late IO.Socket socket;
-  List<dynamic> _gameState = List.filled(100, null);
+  List<dynamic> rooms = [];
   bool _isConnected = false;
 
-  String _myName = '';
+  String _myName = 'TestUser';
+  String _myTelegramId = '123456789';
   String _myPhotoUrl = '';
+
+  final String backendUrl = 'https://grid-lottery-backend.onrender.com';
 
   @override
   void initState() {
     super.initState();
-    _initSocket();
+    _initTelegramAndSocket();
   }
 
-  void _initSocket() {
-    String username = 'TestUser';
-    String telegramId = '123456789';
-
+  void _initTelegramAndSocket() {
     try {
       if (js.context.hasProperty('Telegram')) {
         var tg = js.context['Telegram']['WebApp'];
@@ -72,10 +61,9 @@ class _GameScreenState extends State<GameScreen> {
         
         var user = tg['initDataUnsafe']['user'];
         if (user != null) {
-          username = user['username'] ?? 'Unknown';
-          telegramId = (user['id'] ?? 123456789).toString();
+          _myTelegramId = (user['id'] ?? 123456789).toString();
           if (mounted) setState(() {
-            _myName = user['first_name'] ?? username;
+            _myName = user['first_name'] ?? (user['username'] ?? 'Unknown');
             _myPhotoUrl = user['photo_url'] ?? '';
           });
         }
@@ -83,11 +71,6 @@ class _GameScreenState extends State<GameScreen> {
     } catch (e) {
       print("Telegram API не найдено.");
     }
-
-    _myTelegramId = telegramId;
-
-    // TODO: После деплоя бэкенда на Render/Railway, замените 'http://localhost:3000' на ваш новый URL
-    const String backendUrl = 'https://grid-lottery-backend.onrender.com';
 
     socket = IO.io(backendUrl, IO.OptionBuilder()
         .setTransports(['websocket'])
@@ -101,74 +84,11 @@ class _GameScreenState extends State<GameScreen> {
       if (mounted) setState(() {
         _isConnected = true;
       });
-      socket.emit('join_game', {
-        'username': username,
-        'telegram_id': telegramId,
-        'first_name': _myName,
-        'photo_url': _myPhotoUrl,
-      });
     });
 
-    socket.on('init_state', (data) {
+    socket.on('rooms_list', (data) {
       if (mounted) setState(() {
-        if (data is List) _gameState = data;
-        _rouletteCell = null;
-        _winnerCell = null;
-        _winnerMessage = '';
-      });
-    });
-
-    socket.on('update_state', (data) {
-      if (mounted) setState(() {
-        if (data is List) _gameState = data;
-      });
-    });
-
-    socket.on('history_update', (data) {
-      if (mounted) setState(() {
-        if (data is List) _history = data;
-      });
-    });
-
-    socket.on('game_update', (data) {
-      if (mounted) setState(() {
-        _phase = data['phase'] ?? 'BETTING';
-        _timeLeft = data['timeLeft'] ?? 0;
-        _bank = data['bank'] ?? 0;
-        if (data['message'] != null) {
-          _winnerMessage = data['message'];
-        }
-        
-        // Очистка при рестарте
-        if (_phase == 'BETTING' && _winnerCell != null) {
-          _winnerCell = null;
-          _rouletteCell = null;
-          _winnerMessage = '';
-        }
-      });
-    });
-
-    socket.on('balances_update', (data) {
-      if (mounted) setState(() {
-        if (data is Map) {
-          var k = data[_myTelegramId] ?? data[int.tryParse(_myTelegramId) ?? -1];
-          if (k != null) {
-            _coins = (k as num).toInt();
-          }
-        }
-      });
-    });
-
-    socket.on('roulette_tick', (index) {
-      if (mounted) setState(() {
-        _rouletteCell = index;
-      });
-    });
-
-    socket.on('roulette_finish', (index) {
-      if (mounted) setState(() {
-        _winnerCell = index;
-        _rouletteCell = null;
+        rooms = data;
       });
     });
 
@@ -180,16 +100,235 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('ВЫБОР КОМНАТЫ', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2)),
+        centerTitle: true,
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+            radius: 1.5,
+            center: Alignment.topCenter,
+          ),
+        ),
+        child: _isConnected
+            ? ListView.builder(
+                padding: const EdgeInsets.all(16.0),
+                itemCount: rooms.length,
+                itemBuilder: (context, index) {
+                  var room = rooms[index];
+                  bool isFull = room['playersCount'] >= room['maxPlayers'];
+
+                  return Card(
+                    color: Colors.white.withOpacity(0.05),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      title: Text(
+                        room['name'],
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      ),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          'Игроков: ${room['playersCount']} / ${room['maxPlayers']}',
+                          style: TextStyle(
+                            color: isFull ? Colors.redAccent : Colors.greenAccent,
+                          ),
+                        ),
+                      ),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.monetization_on, color: Colors.amber, size: 20),
+                          const SizedBox(height: 4),
+                          Text('${room['cellPrice']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        ],
+                      ),
+                      onTap: () {
+                        if (isFull) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Комната заполнена!')),
+                          );
+                          return;
+                        }
+                        
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => GameScreen(
+                              socket: socket,
+                              roomId: room['id'],
+                              backendUrl: backendUrl,
+                              userData: {
+                                'username': _myName, // Used for short names
+                                'first_name': _myName,
+                                'telegram_id': _myTelegramId,
+                                'photo_url': _myPhotoUrl,
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              )
+            : const Center(
+                child: CircularProgressIndicator(color: Colors.blueAccent),
+              ),
+      ),
+    );
+  }
+}
+
+class GameScreen extends StatefulWidget {
+  final IO.Socket socket;
+  final String roomId;
+  final String backendUrl;
+  final Map<String, dynamic> userData;
+
+  const GameScreen({
+    super.key,
+    required this.socket,
+    required this.roomId,
+    required this.backendUrl,
+    required this.userData,
+  });
+
+  @override
+  State<GameScreen> createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> {
+  int _coins = 0;
+  int _bank = 0;
+  int _cellPrice = 5;
+  String _phase = 'WAITING';
+  int _timeLeft = 60;
+  String _winnerMessage = '';
+  int? _rouletteCell;
+  int? _winnerCell;
+
+  List<dynamic> _history = [];
+  List<dynamic> _gameState = List.filled(100, null);
+
+  @override
+  void initState() {
+    super.initState();
+    _setupSocketListeners();
+    _joinRoom();
+  }
+
+  void _joinRoom() {
+    widget.socket.emitWithAck('join_room', {
+      'roomId': widget.roomId,
+      'userData': widget.userData,
+    }, ack: (response) {
+      if (response != null && response['success'] == false) {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text(response['message'] ?? 'Ошибка входа в комнату')),
+           );
+           Navigator.pop(context);
+        }
+      }
+    });
+  }
+
+  void _setupSocketListeners() {
+    widget.socket.on('init_state', (data) {
+      if (mounted) setState(() {
+        if (data is List) _gameState = data;
+        _rouletteCell = null;
+        _winnerCell = null;
+        _winnerMessage = '';
+      });
+    });
+
+    widget.socket.on('update_state', (data) {
+      if (mounted) setState(() {
+        if (data is List) _gameState = data;
+      });
+    });
+
+    widget.socket.on('history_update', (data) {
+      if (mounted) setState(() {
+        if (data is List) _history = data;
+      });
+    });
+
+    widget.socket.on('game_update', (data) {
+      if (mounted) setState(() {
+        if (data['phase'] != null) _phase = data['phase'];
+        if (data['timeLeft'] != null) _timeLeft = data['timeLeft'];
+        if (data['bank'] != null) _bank = data['bank'];
+        if (data['cellPrice'] != null) _cellPrice = data['cellPrice'];
+        
+        if (data['message'] != null) {
+          _winnerMessage = data['message'];
+        }
+        
+        // Очистка при рестарте
+        if ((_phase == 'BETTING' || _phase == 'WAITING') && _winnerCell != null) {
+          _winnerCell = null;
+          _rouletteCell = null;
+          _winnerMessage = '';
+        }
+      });
+    });
+
+    widget.socket.on('balances_update', (data) {
+      if (mounted) setState(() {
+        if (data is Map) {
+          var k = data[widget.userData['telegram_id']] ?? data[int.tryParse(widget.userData['telegram_id']) ?? -1];
+          if (k != null) {
+            _coins = (k as num).toInt();
+          }
+        }
+      });
+    });
+
+    widget.socket.on('roulette_tick', (index) {
+      if (mounted) setState(() {
+        _rouletteCell = index;
+      });
+    });
+
+    widget.socket.on('roulette_finish', (index) {
+      if (mounted) setState(() {
+        _winnerCell = index;
+        _rouletteCell = null;
+      });
+    });
+  }
+
+  @override
   void dispose() {
-    socket.disconnect();
-    socket.dispose();
+    widget.socket.emit('leave_room');
+    
+    // Remove listeners specifically added for game screen to avoid duplicates if re-entering
+    widget.socket.off('init_state');
+    widget.socket.off('update_state');
+    widget.socket.off('history_update');
+    widget.socket.off('game_update');
+    widget.socket.off('balances_update');
+    widget.socket.off('roulette_tick');
+    widget.socket.off('roulette_finish');
+    
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     String timerText = '';
-    if (_phase == 'BETTING') {
+    if (_phase == 'WAITING') {
+      timerText = 'ОЖИДАНИЕ ИГРОКОВ';
+    } else if (_phase == 'BETTING') {
       timerText = '00:${_timeLeft.toString().padLeft(2, '0')}';
     } else if (_phase == 'ROULETTE') {
       timerText = 'СТАВКИ СДЕЛАНЫ';
@@ -218,36 +357,15 @@ class _GameScreenState extends State<GameScreen> {
           ],
         ),
         centerTitle: true,
-        leading: Center(
-          child: Padding(
-            padding: const EdgeInsets.only(left: 16.0),
-            child: Text(
-              'Банк\n$_bank',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, height: 1.1),
-            ),
-          ),
-        ),
-        leadingWidth: 80,
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              children: [
-                if (_myName.isNotEmpty)
-                  Text(_myName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(width: 8),
-                if (_myPhotoUrl.isNotEmpty)
-                  CircleAvatar(radius: 16, backgroundImage: NetworkImage('$backendUrl/avatar?url=${Uri.encodeComponent(_myPhotoUrl)}'))
-                else
-                  const CircleAvatar(radius: 16, child: Icon(Icons.person, size: 16)),
-                const SizedBox(width: 12),
-                Icon(
-                  _isConnected ? Icons.wifi : Icons.wifi_off,
-                  color: _isConnected ? Colors.green : Colors.redAccent,
-                  size: 16,
-                ),
-              ],
+            child: Center(
+              child: Text(
+                'Банк\n$_bank',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, height: 1.1),
+              ),
             ),
           )
         ],
@@ -273,7 +391,7 @@ class _GameScreenState extends State<GameScreen> {
                     filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(24),
@@ -289,10 +407,10 @@ class _GameScreenState extends State<GameScreen> {
                         timerText,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: _phase == 'BETTING' ? 42 : 22,
+                          fontSize: (_phase == 'BETTING' || _phase == 'ROULETTE') ? 32 : 18,
                           fontWeight: FontWeight.w900,
                           letterSpacing: _phase == 'BETTING' ? 4 : 2,
-                          color: _phase == 'REWARD' ? Colors.greenAccent : Colors.white,
+                          color: _phase == 'REWARD' ? Colors.greenAccent : (_phase == 'WAITING' ? Colors.grey : Colors.white),
                           shadows: [
                             Shadow(color: Colors.black.withOpacity(0.5), blurRadius: 10, offset: const Offset(0, 4)),
                             if (_phase == 'BETTING')
@@ -372,13 +490,13 @@ class _GameScreenState extends State<GameScreen> {
                           return InkWell(
                             onTap: () {
                               if (_phase != 'BETTING') return; 
-                              if (!isTaken && _isConnected && _coins >= 5) {
-                                socket.emit('click_cell', index);
-                              } else if (_coins < 5) {
+                              if (!isTaken && _coins >= _cellPrice) {
+                                widget.socket.emit('click_cell', index);
+                              } else if (_coins < _cellPrice) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Недостаточно монет! Стоимость: 5'),
-                                    duration: Duration(seconds: 1),
+                                  SnackBar(
+                                    content: Text('Недостаточно монет! Стоимость: $_cellPrice'),
+                                    duration: const Duration(seconds: 1),
                                   ),
                                 );
                               }
@@ -419,10 +537,10 @@ class _GameScreenState extends State<GameScreen> {
                 // History Section
                 if (_history.isNotEmpty) ...[
                    const Text(
-                     '🏆 ИСТОРИЯ ПОБЕД',
+                     '🏆 ИСТОРИЯ ПОБЕД (ЭТА КОМНАТА)',
                      style: TextStyle(
                        color: Colors.white,
-                       fontSize: 18,
+                       fontSize: 14,
                        fontWeight: FontWeight.w800,
                        letterSpacing: 2
                      ),
@@ -452,7 +570,7 @@ class _GameScreenState extends State<GameScreen> {
                               leading: item['photo_url'] != null && item['photo_url'].toString().isNotEmpty
                                 ? CircleAvatar(
                                     radius: 24,
-                                    backgroundImage: NetworkImage('$backendUrl/avatar?url=${Uri.encodeComponent(item['photo_url'])}'),
+                                    backgroundImage: NetworkImage('${widget.backendUrl}/avatar?url=${Uri.encodeComponent(item['photo_url'])}'),
                                   )
                                 : CircleAvatar(
                                     backgroundColor: hColor.withOpacity(0.2),
