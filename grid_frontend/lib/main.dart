@@ -418,7 +418,7 @@ class _MainScreenState extends State<MainScreen> {
         title: Text(titles[_currentIndex], style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2)),
         centerTitle: true,
       ),
-      body: Stack(children: [ Container(
+      body: Container(
         decoration: const BoxDecoration(
           gradient: RadialGradient(
             colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
