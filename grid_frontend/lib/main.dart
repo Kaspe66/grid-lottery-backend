@@ -556,6 +556,7 @@ class _GameScreenState extends State<GameScreen> {
 
   
   List<Widget> _floatingEmojis = [];
+  bool _showEmojis = false;
 @override
   void initState() {
     super.initState();
@@ -1053,6 +1054,21 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Widget _buildEmojiPicker() {
+    if (!_showEmojis) {
+      return Positioned(
+        bottom: 20,
+        right: 16,
+        child: FloatingActionButton(
+          mini: true,
+          backgroundColor: Colors.blueAccent.withOpacity(0.8),
+          child: const Icon(Icons.emoji_emotions, color: Colors.white),
+          onPressed: () {
+            setState(() { _showEmojis = true; });
+          },
+        ),
+      );
+    }
+
     final emojis = ['👍', '😂', '😭', '😡', '🎉', '🤑'];
     return Positioned(
       bottom: 20,
@@ -1061,17 +1077,26 @@ class _GameScreenState extends State<GameScreen> {
       child: Container(
         height: 60,
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.5),
+          color: Colors.black.withOpacity(0.9),
           borderRadius: BorderRadius.circular(30),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: emojis.map((e) => GestureDetector(
-            onTap: () {
-              widget.socket.emit('send_emoji', e);
-            },
-            child: Text(e, style: const TextStyle(fontSize: 32)),
-          )).toList(),
+          children: [
+            ...emojis.map((e) => GestureDetector(
+              onTap: () {
+                widget.socket.emit('send_emoji', e);
+                setState(() { _showEmojis = false; });
+              },
+              child: Text(e, style: const TextStyle(fontSize: 32)),
+            )).toList(),
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white54),
+              onPressed: () {
+                setState(() { _showEmojis = false; });
+              },
+            )
+          ],
         ),
       ),
     );

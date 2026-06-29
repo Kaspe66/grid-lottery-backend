@@ -31,6 +31,7 @@ app.get('/avatar', async (req, res) => {
 
 bot.start((ctx) => {
     const userId = ctx.from.id;
+    ctx.setChatMenuButton({ type: 'web_app', text: 'Играть 🎲', web_app: { url: webAppUrl } }).catch(e => console.log(e));
     ctx.reply('Добро пожаловать в Grid Lottery! 🎲\n\nПриглашай друзей и получай 500 монет за каждого!\nТвоя ссылка:\nhttps://t.me/GridLotteryBot/app?startapp=ref_' + userId + '\n\nНажми кнопку ниже, чтобы зайти в комнату:', {
         reply_markup: {
             inline_keyboard: [
