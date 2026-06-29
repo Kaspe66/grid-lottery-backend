@@ -41,7 +41,13 @@ class AppTranslations {
       'Песочница': 'Sandbox',
       'Любитель': 'Amateur',
       'Профи': 'Pro',
-      'Элита': 'Elite'
+      'Элита': 'Elite',
+      'deposit': 'Deposit',
+      'connected_wallet': 'Connected Wallet',
+      'unlink': 'Unlink',
+      'emojis_btn': 'Emojis 😀',
+      'error_funds': 'Transaction cancelled. Ensure enough balance for transfer and network fees.',
+      'error_tx': 'Transaction error: '
     },
     'ru': {
       'room_selection': 'ВЫБОР КОМНАТЫ',
@@ -72,7 +78,13 @@ class AppTranslations {
       'Песочница': 'Песочница',
       'Любитель': 'Любитель',
       'Профи': 'Профи',
-      'Элита': 'Элита'
+      'Элита': 'Элита',
+      'deposit': 'Пополнить',
+      'connected_wallet': 'Привязанный кошелек',
+      'unlink': 'Отвязать',
+      'emojis_btn': 'Эмодзи 😀',
+      'error_funds': 'Транзакция отменена. Убедитесь, что на балансе достаточно средств для перевода и оплаты комиссии сети.',
+      'error_tx': 'Ошибка транзакции: '
     }
   };
 
@@ -407,7 +419,13 @@ class _MainScreenState extends State<MainScreen> {
         final wallet = 'UQBxu51QZAAzUfi1WJLSS6SOYuEDu9W18Bsjw4ZfCMtF_TUh';
         final memo = 'deposit_$_myTelegramId';
         try {
-          js.context.callMethod('sendTonTransaction', [wallet, amountNano.toString(), memo]);
+          js.context.callMethod('sendTonTransaction', [
+            wallet, 
+            amountNano.toString(), 
+            memo,
+            AppTranslations.t('error_funds'),
+            AppTranslations.t('error_tx')
+          ]);
         } catch (e) {
           print(e);
         }
@@ -474,7 +492,7 @@ class _MainScreenState extends State<MainScreen> {
           
           if (_connectedWallet != null) ...[
             ListTile(
-              title: const Text('Привязанный кошелек', style: TextStyle(color: Colors.white54)),
+              title: Text(AppTranslations.t('connected_wallet'), style: const TextStyle(color: Colors.white54)),
               subtitle: Text(
                 '${_connectedWallet!.substring(0, 4)}...${_connectedWallet!.substring(_connectedWallet!.length - 4)}',
                 style: const TextStyle(fontSize: 18, color: Colors.blueAccent, fontWeight: FontWeight.bold),
@@ -484,7 +502,7 @@ class _MainScreenState extends State<MainScreen> {
                 onPressed: () {
                   try { js.context.callMethod('disconnectWallet'); } catch(e) {}
                 },
-                child: const Text('Отвязать', style: TextStyle(color: Colors.redAccent)),
+                child: Text(AppTranslations.t('unlink'), style: const TextStyle(color: Colors.redAccent)),
               ),
             ),
             const SizedBox(height: 16),
@@ -1106,7 +1124,7 @@ class _GameScreenState extends State<GameScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
           ),
           icon: const Icon(Icons.emoji_emotions, color: Colors.white),
-          label: const Text('Эмодзи 😀', style: TextStyle(color: Colors.white)),
+          label: Text(AppTranslations.t('emojis_btn'), style: const TextStyle(color: Colors.white)),
           onPressed: () {
             setState(() { _showEmojis = true; });
           },

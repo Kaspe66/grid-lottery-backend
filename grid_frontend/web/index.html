@@ -60,7 +60,7 @@
       }
     };
 
-    window.sendTonTransaction = async function(address, amountNanoStr, memo) {
+    window.sendTonTransaction = async function(address, amountNanoStr, memo, errorFundsStr, errorGenericStr) {
       if (!tonConnectUI) {
         window.initTonConnect();
       }
@@ -121,9 +121,9 @@
       } catch (e) {
           const errStr = (e.message || e).toString().toLowerCase();
           if (errStr.includes('reject') || errStr.includes('userdeclined') || errStr.includes('funds')) {
-              alert("Транзакция отменена. Убедитесь, что на балансе достаточно средств для перевода и оплаты комиссии сети.");
+              alert(errorFundsStr || "Транзакция отменена. Убедитесь, что на балансе достаточно средств для перевода и оплаты комиссии сети.");
           } else {
-              alert("Ошибка транзакции: " + (e.message || e));
+              alert((errorGenericStr || "Ошибка транзакции: ") + (e.message || e));
           }
           console.error(e);
           return false;
