@@ -138,6 +138,12 @@ class _MainScreenState extends State<MainScreen> {
 
   void _initTelegramAndSocket() {
     try {
+      js.context.callMethod('initTonConnect');
+    } catch(e) {
+      print("Failed to init ton connect: $e");
+    }
+
+    try {
       if (js.context.hasProperty('Telegram')) {
         var tg = js.context['Telegram']['WebApp'];
         tg.callMethod('ready'); 
@@ -377,11 +383,10 @@ class _MainScreenState extends State<MainScreen> {
         final amountNano = gram * 1000000000;
         final wallet = 'UQBxu51QZAAzUfi1WJLSS6SOYuEDu9W18Bsjw4ZfCMtF_TUh';
         final memo = 'deposit_$_myTelegramId';
-        final url = 'ton://transfer/$wallet?amount=$amountNano&text=$memo';
         try {
-          js.context['Telegram']['WebApp'].callMethod('openLink', [url]);
+          js.context.callMethod('sendTonTransaction', [wallet, amountNano.toString(), memo]);
         } catch (e) {
-          print(url);
+          print(e);
         }
         Navigator.pop(context);
       },
