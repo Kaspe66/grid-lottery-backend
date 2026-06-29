@@ -120,8 +120,8 @@
           return true;
       } catch (e) {
           const errStr = (e.message || e).toString().toLowerCase();
-          if (errStr.includes('reject') || errStr.includes('userdeclined')) {
-              alert("Транзакция отменена. Убедитесь, что на балансе достаточно средств для перевода и комиссии.");
+          if (errStr.includes('reject') || errStr.includes('userdeclined') || errStr.includes('funds')) {
+              alert("Транзакция отменена. Убедитесь, что на балансе достаточно средств для перевода и оплаты комиссии сети.");
           } else {
               alert("Ошибка транзакции: " + (e.message || e));
           }
