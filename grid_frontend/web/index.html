@@ -119,7 +119,12 @@
           const result = await tonConnectUI.sendTransaction(transaction);
           return true;
       } catch (e) {
-          alert("Ошибка транзакции: " + (e.message || e));
+          const errStr = (e.message || e).toString().toLowerCase();
+          if (errStr.includes('reject') || errStr.includes('userdeclined')) {
+              alert("Транзакция отменена. Убедитесь, что на балансе достаточно средств для перевода и комиссии.");
+          } else {
+              alert("Ошибка транзакции: " + (e.message || e));
+          }
           console.error(e);
           return false;
       }
