@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'dart:js' as js;
+import 'dart:async';
 import 'dart:ui'; 
 
 void main() {
@@ -127,6 +128,8 @@ class _MainScreenState extends State<MainScreen> {
   String _myTelegramId = '123456789';
   String _myPhotoUrl = '';
   String _initData = '';
+  String? _connectedWallet;
+  Timer? _walletTimer;
 
   final String backendUrl = 'https://grid-lottery-backend.onrender.com';
 
@@ -134,6 +137,26 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _initTelegramAndSocket();
+    _walletTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+       _checkWallet();
+    });
+  }
+
+  void _checkWallet() {
+    try {
+      var wallet = js.context.callMethod('getConnectedWallet');
+      if (wallet != null && wallet.toString() != _connectedWallet) {
+        if (mounted) setState(() { _connectedWallet = wallet.toString(); });
+      } else if (wallet == null && _connectedWallet != null) {
+        if (mounted) setState(() { _connectedWallet = null; });
+      }
+    } catch(e) {}
+  }
+
+  @override
+  void dispose() {
+    _walletTimer?.cancel();
+    super.dispose();
   }
 
   void _initTelegramAndSocket() {
@@ -448,6 +471,25 @@ class _MainScreenState extends State<MainScreen> {
             ]),
           ),
           const SizedBox(height: 32),
+          
+          if (_connectedWallet != null) ...[
+            ListTile(
+              title: const Text('Привязанный кошелек', style: TextStyle(color: Colors.white54)),
+              subtitle: Text(
+                '${_connectedWallet!.substring(0, 4)}...${_connectedWallet!.substring(_connectedWallet!.length - 4)}',
+                style: const TextStyle(fontSize: 18, color: Colors.blueAccent, fontWeight: FontWeight.bold),
+              ),
+              trailing: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent.withOpacity(0.2)),
+                onPressed: () {
+                  try { js.context.callMethod('disconnectWallet'); } catch(e) {}
+                },
+                child: const Text('Отвязать', style: TextStyle(color: Colors.redAccent)),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
@@ -969,6 +1011,8 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                 ),
                 
+                const SizedBox(height: 20),
+                _buildEmojiPicker(),
                 const SizedBox(height: 40),
                 
                 // History Section
@@ -1048,20 +1092,21 @@ class _GameScreenState extends State<GameScreen> {
         ),
       ),
       ..._floatingEmojis,
-      _buildEmojiPicker(),
     ],),
     );
   }
 
   Widget _buildEmojiPicker() {
     if (!_showEmojis) {
-      return Positioned(
-        bottom: 20,
-        right: 16,
-        child: FloatingActionButton(
-          mini: true,
-          backgroundColor: Colors.blueAccent.withOpacity(0.8),
-          child: const Icon(Icons.emoji_emotions, color: Colors.white),
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blueAccent.withOpacity(0.8),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          ),
+          icon: const Icon(Icons.emoji_emotions, color: Colors.white),
+          label: const Text('Эмодзи 😀', style: TextStyle(color: Colors.white)),
           onPressed: () {
             setState(() { _showEmojis = true; });
           },
@@ -1070,34 +1115,29 @@ class _GameScreenState extends State<GameScreen> {
     }
 
     final emojis = ['👍', '😂', '😭', '😡', '🎉', '🤑'];
-    return Positioned(
-      bottom: 20,
-      left: 16,
-      right: 16,
-      child: Container(
-        height: 60,
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ...emojis.map((e) => GestureDetector(
-              onTap: () {
-                widget.socket.emit('send_emoji', e);
-                setState(() { _showEmojis = false; });
-              },
-              child: Text(e, style: const TextStyle(fontSize: 32)),
-            )).toList(),
-            IconButton(
-              icon: const Icon(Icons.close, color: Colors.white54),
-              onPressed: () {
-                setState(() { _showEmojis = false; });
-              },
-            )
-          ],
-        ),
+    return Container(
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          ...emojis.map((e) => GestureDetector(
+            onTap: () {
+              widget.socket.emit('send_emoji', e);
+              setState(() { _showEmojis = false; });
+            },
+            child: Text(e, style: const TextStyle(fontSize: 32)),
+          )).toList(),
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white54),
+            onPressed: () {
+              setState(() { _showEmojis = false; });
+            },
+          )
+        ],
       ),
     );
   }

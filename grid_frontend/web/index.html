@@ -46,6 +46,19 @@
       }
     };
 
+    window.getConnectedWallet = function() {
+      if (tonConnectUI && tonConnectUI.connected) {
+          return tonConnectUI.account.address;
+      }
+      return null;
+    };
+
+    window.disconnectWallet = async function() {
+      if (tonConnectUI && tonConnectUI.connected) {
+          await tonConnectUI.disconnect();
+      }
+    };
+
     window.sendTonTransaction = async function(address, amountNanoStr, memo) {
       if (!tonConnectUI) {
         window.initTonConnect();
@@ -56,16 +69,12 @@
           try {
               await tonConnectUI.openModal();
           } catch(e) {
+              alert("Ошибка открытия кошелька: " + (e.message || e));
               console.error(e);
               return false;
           }
       }
-      // Ждем, пока пользователь подключит кошелек в модалке (может занять время)
-      // В TON Connect UI openModal() просто открывает окно, но не ждет завершения.
-      // Поэтому мы подписываемся на изменение статуса, если кошелек не подключен.
-      // Для упрощения: если после await openModal кошелек еще не подключен, выкидываем ошибку (пользователь закрыл окно).
-      // На самом деле openModal() это Promise, который резолвится когда окно закрывается.
-      // Но лучше просто проверить .connected после.
+      
       if (!tonConnectUI.connected) {
          console.log("Wallet not connected");
          return false; 
@@ -107,6 +116,7 @@
           const result = await tonConnectUI.sendTransaction(transaction);
           return true;
       } catch (e) {
+          alert("Ошибка транзакции: " + (e.message || e));
           console.error(e);
           return false;
       }
