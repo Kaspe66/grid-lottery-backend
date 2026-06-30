@@ -51,7 +51,7 @@ const DB_URL_USERS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/user
 const DB_URL_BALANCES = 'https://grid-lottery-game-default-rtdb.firebaseio.com/balances.json';
 const DB_URL_WITHDRAWALS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/withdrawals.json';
 
-function createUserObject(balance = 1000) {
+function createUserObject(balance = 50) {
     return {
         balance_real: 0,
         balance_bonus: balance,
@@ -59,6 +59,7 @@ function createUserObject(balance = 1000) {
         lastBonusClaim: 0,
         referredBy: null,
         referralsCount: 0,
+        hasDeposited: false,
         name: 'User',
         photo_url: ''
     };
@@ -76,6 +77,10 @@ fetch(DB_URL_USERS)
                     users[id].balance_bonus = (users[id].balance_bonus || 0) + users[id].balance;
                     users[id].balance_real = users[id].balance_real || 0;
                     delete users[id].balance;
+                    migrated = true;
+                }
+                if (users[id].hasDeposited === undefined) {
+                    users[id].hasDeposited = false;
                     migrated = true;
                 }
             }
@@ -220,7 +225,8 @@ function finishRoulette(room, winningIndex) {
             users[winnerData.telegram_id].stats.wins++;
             users[winnerData.telegram_id].stats.totalWon += winAmount;
         } else {
-            users[winnerData.telegram_id] = createUserObject(1000 + winAmount);
+            users[winnerData.telegram_id] = createUserObject(50);
+            users[winnerData.telegram_id].balance_real += winAmount;
             users[winnerData.telegram_id].stats.wins++;
             users[winnerData.telegram_id].stats.totalWon += winAmount;
         }
@@ -326,7 +332,7 @@ io.on('connection', (socket) => {
         };
 
         if (!users[tgId]) {
-            users[tgId] = createUserObject(1000);
+            users[tgId] = createUserObject(50);
             saveUsers();
         }
 
@@ -386,7 +392,7 @@ io.on('connection', (socket) => {
         socket.roomId = roomId;
 
         if (users[tgId] === undefined) {
-            users[tgId] = createUserObject(1000);
+            users[tgId] = createUserObject(50);
             
             // Проверка рефералов
             if (userData.initData) {
@@ -396,7 +402,7 @@ io.on('connection', (socket) => {
                     const referrerId = startParam.split('_')[1];
                     if (users[referrerId] && referrerId !== tgId) {
                         users[tgId].referredBy = referrerId;
-                        users[referrerId].balance_bonus += 500;
+                        users[referrerId].balance_bonus += 50;
                         users[referrerId].referralsCount++;
                     }
                 }
@@ -494,6 +500,11 @@ io.on('connection', (socket) => {
         
         if (amount < 500) {
             socket.emit('withdrawal_error', 'Минимальная сумма вывода - 500 монет');
+            return;
+        }
+        
+        if (!userRecord.hasDeposited) {
+            socket.emit('withdrawal_error', 'Для вывода средств необходим хотя бы один депозит (пополнение)');
             return;
         }
         
@@ -619,9 +630,10 @@ async function checkTonTransactions() {
                         
                         if (amountInCoins > 0) {
                             if (!users[tgId]) {
-                                users[tgId] = createUserObject(1000);
+                                users[tgId] = createUserObject(50);
                             }
                             users[tgId].balance_real += amountInCoins;
+                            users[tgId].hasDeposited = true;
                             console.log(`Успешное пополнение: Игрок ${tgId} получил ${amountInCoins} монет за ${value} nanoGram.`);
                             saveUsers();
                             io.emit('users_update', users); // Обновляем балансы у всех (включая самого игрока)
