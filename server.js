@@ -141,10 +141,10 @@ function validateInitData(initData, token) {
 
 // --- Игровые комнаты ---
 const rooms = [
-    { id: 'room_5', name: 'Песочница', cellPrice: 5, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, winnerHistory: [], rouletteInterval: null },
-    { id: 'room_10', name: 'Любитель', cellPrice: 10, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, winnerHistory: [], rouletteInterval: null },
-    { id: 'room_25', name: 'Профи', cellPrice: 25, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, winnerHistory: [], rouletteInterval: null },
-    { id: 'room_50', name: 'Элита', cellPrice: 50, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, winnerHistory: [], rouletteInterval: null },
+    { id: 'room_5', name: 'Песочница', cellPrice: 5, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, bank_real: 0, bank_bonus: 0, winnerHistory: [], rouletteInterval: null },
+    { id: 'room_10', name: 'Любитель', cellPrice: 10, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, bank_real: 0, bank_bonus: 0, winnerHistory: [], rouletteInterval: null },
+    { id: 'room_25', name: 'Профи', cellPrice: 25, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, bank_real: 0, bank_bonus: 0, winnerHistory: [], rouletteInterval: null },
+    { id: 'room_50', name: 'Элита', cellPrice: 50, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, bank_real: 0, bank_bonus: 0, winnerHistory: [], rouletteInterval: null },
 ];
 
 function getRoom(id) {
@@ -156,6 +156,8 @@ function resetRoom(room) {
     room.gamePhase = 'WAITING';
     room.timeLeft = BETTING_TIME;
     room.bank = 0;
+    room.bank_real = 0;
+    room.bank_bonus = 0;
     io.to(room.id).emit('init_state', room.gameState);
     
     if (room.players.size >= 2) {
@@ -212,27 +214,34 @@ function finishRoulette(room, winningIndex) {
     const winnerData = room.gameState[winningIndex];
     
     if (winnerData) {
-        let commission = Math.floor(room.bank * 0.1);
-        let winAmount = room.bank - commission;
+        let commissionReal = Math.floor((room.bank_real || 0) * 0.1);
+        let winAmountReal = (room.bank_real || 0) - commissionReal;
+
+        let commissionBonus = Math.floor((room.bank_bonus || 0) * 0.1);
+        let winAmountBonus = (room.bank_bonus || 0) - commissionBonus;
+
+        let winAmountTotal = winAmountReal + winAmountBonus;
 
         if (!users['_SYSTEM_']) users['_SYSTEM_'] = { commission_balance: 0 };
-        users['_SYSTEM_'].commission_balance = (users['_SYSTEM_'].commission_balance || 0) + commission;
+        users['_SYSTEM_'].commission_balance = (users['_SYSTEM_'].commission_balance || 0) + commissionReal;
 
         rewardData = {
             hasWinner: true,
             username: winnerData.username,
-            bank: winAmount,
+            bank: winAmountTotal,
             cell: winningIndex + 1
         };
         if (users[winnerData.telegram_id]) {
-            users[winnerData.telegram_id].balance_real += winAmount;
+            users[winnerData.telegram_id].balance_real += winAmountReal;
+            users[winnerData.telegram_id].balance_bonus += winAmountBonus;
             users[winnerData.telegram_id].stats.wins++;
-            users[winnerData.telegram_id].stats.totalWon += winAmount;
+            users[winnerData.telegram_id].stats.totalWon += winAmountTotal;
         } else {
             users[winnerData.telegram_id] = createUserObject(50);
-            users[winnerData.telegram_id].balance_real += winAmount;
+            users[winnerData.telegram_id].balance_real += winAmountReal;
+            users[winnerData.telegram_id].balance_bonus += winAmountBonus;
             users[winnerData.telegram_id].stats.wins++;
-            users[winnerData.telegram_id].stats.totalWon += winAmount;
+            users[winnerData.telegram_id].stats.totalWon += winAmountTotal;
         }
         saveUsers();
         io.emit('users_update', users);
@@ -251,7 +260,7 @@ function finishRoulette(room, winningIndex) {
         // Никто не выиграл - деньги уходят проекту
         if (room.bank > 0) {
             if (!users['_SYSTEM_']) users['_SYSTEM_'] = { commission_balance: 0 };
-            users['_SYSTEM_'].commission_balance = (users['_SYSTEM_'].commission_balance || 0) + room.bank;
+            users['_SYSTEM_'].commission_balance = (users['_SYSTEM_'].commission_balance || 0) + (room.bank_real || 0);
             saveUsers();
         }
     }
@@ -477,10 +486,13 @@ io.on('connection', (socket) => {
         if (bonus + real >= price) {
             if (bonus >= price) {
                 userRecord.balance_bonus -= price;
+                room.bank_bonus = (room.bank_bonus || 0) + price;
             } else {
                 let remainder = price - bonus;
                 userRecord.balance_bonus = 0;
                 userRecord.balance_real -= remainder;
+                room.bank_bonus = (room.bank_bonus || 0) + bonus;
+                room.bank_real = (room.bank_real || 0) + remainder;
             }
             
             userRecord.stats.totalSpent += price;
