@@ -49,10 +49,12 @@ const REWARD_TIME = 5;
 let users = {}; 
 const DB_URL_USERS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/users.json';
 const DB_URL_BALANCES = 'https://grid-lottery-game-default-rtdb.firebaseio.com/balances.json';
+const DB_URL_WITHDRAWALS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/withdrawals.json';
 
 function createUserObject(balance = 1000) {
     return {
-        balance: balance,
+        balance_real: 0,
+        balance_bonus: balance,
         stats: { gamesPlayed: 0, wins: 0, totalWon: 0, totalSpent: 0 },
         lastBonusClaim: 0,
         referredBy: null,
@@ -67,6 +69,18 @@ fetch(DB_URL_USERS)
     .then(data => {
         if (data) {
             users = data;
+            
+            let migrated = false;
+            for (let id in users) {
+                if (users[id].balance !== undefined) {
+                    users[id].balance_bonus = (users[id].balance_bonus || 0) + users[id].balance;
+                    users[id].balance_real = users[id].balance_real || 0;
+                    delete users[id].balance;
+                    migrated = true;
+                }
+            }
+            if (migrated) saveUsers();
+            
             console.log('Пользователи загружены.');
         } else {
             fetch(DB_URL_BALANCES).then(r => r.json()).then(oldBalances => {
@@ -142,6 +156,16 @@ function resetRoom(room) {
 }
 
 function startRoulette(room) {
+    const purchasedCells = [];
+    room.gameState.forEach((cell, index) => {
+        if (cell !== null) purchasedCells.push(index);
+    });
+
+    if (purchasedCells.length === 0) {
+        resetRoom(room);
+        return;
+    }
+
     room.gamePhase = 'ROULETTE';
     room.timeLeft = ROULETTE_TIME;
     io.to(room.id).emit('game_update', { phase: room.gamePhase, timeLeft: room.timeLeft, bank: room.bank });
@@ -149,15 +173,18 @@ function startRoulette(room) {
     let jumps = 0;
     const maxJumps = (ROULETTE_TIME * 1000) / 150; 
     let currentCell = crypto.randomInt(0, 100);
+    
+    // Выбираем финального победителя заранее
+    const winningIndex = purchasedCells[crypto.randomInt(0, purchasedCells.length)];
 
     room.rouletteInterval = setInterval(() => {
-        currentCell = crypto.randomInt(0, 100);
+        currentCell = purchasedCells[crypto.randomInt(0, purchasedCells.length)]; // Прыгаем только по купленным
         io.to(room.id).emit('roulette_tick', currentCell);
         
         jumps++;
         if (jumps >= maxJumps) {
             clearInterval(room.rouletteInterval);
-            finishRoulette(room, currentCell);
+            finishRoulette(room, winningIndex);
         }
     }, 150);
 }
@@ -178,8 +205,8 @@ function finishRoulette(room, winningIndex) {
         let commission = Math.floor(room.bank * 0.1);
         let winAmount = room.bank - commission;
 
-        if (!users['_SYSTEM_']) users['_SYSTEM_'] = { balance: 0, stats: { totalWon: 0 } };
-        users['_SYSTEM_'].balance += commission;
+        if (!users['_SYSTEM_']) users['_SYSTEM_'] = { balance_real: 0, balance_bonus: 0, stats: { totalWon: 0 } };
+        users['_SYSTEM_'].balance_real += commission;
         users['_SYSTEM_'].stats.totalWon += commission;
 
         rewardData = {
@@ -189,7 +216,7 @@ function finishRoulette(room, winningIndex) {
             cell: winningIndex + 1
         };
         if (users[winnerData.telegram_id]) {
-            users[winnerData.telegram_id].balance += winAmount;
+            users[winnerData.telegram_id].balance_real += winAmount;
             users[winnerData.telegram_id].stats.wins++;
             users[winnerData.telegram_id].stats.totalWon += winAmount;
         } else {
@@ -213,8 +240,8 @@ function finishRoulette(room, winningIndex) {
     } else {
         // Никто не выиграл - деньги уходят проекту
         if (room.bank > 0) {
-            if (!users['_SYSTEM_']) users['_SYSTEM_'] = { balance: 0, stats: { totalWon: 0 } };
-            users['_SYSTEM_'].balance += room.bank;
+            if (!users['_SYSTEM_']) users['_SYSTEM_'] = { balance_real: 0, balance_bonus: 0, stats: { totalWon: 0 } };
+            users['_SYSTEM_'].balance_real += room.bank;
             users['_SYSTEM_'].stats.totalWon += room.bank;
             saveUsers();
         }
@@ -369,7 +396,7 @@ io.on('connection', (socket) => {
                     const referrerId = startParam.split('_')[1];
                     if (users[referrerId] && referrerId !== tgId) {
                         users[tgId].referredBy = referrerId;
-                        users[referrerId].balance += 500;
+                        users[referrerId].balance_bonus += 500;
                         users[referrerId].referralsCount++;
                     }
                 }
@@ -414,18 +441,31 @@ io.on('connection', (socket) => {
         if (!room) return;
         if (room.gamePhase !== 'BETTING') return;
         if (typeof index !== 'number' || index < 0 || index >= 100) return;
-        if (room.gameState[index] !== null) return; 
+        if (room.gameState[index] !== null) {
+            socket.emit('error', 'Ячейка уже занята');
+            return; 
+        }
 
         const tgId = socket.userData.telegram_id;
         let userRecord = users[tgId];
         if (!userRecord) return;
-        let userBalance = userRecord.balance || 0;
+        
+        let price = room.cellPrice;
+        let bonus = userRecord.balance_bonus || 0;
+        let real = userRecord.balance_real || 0;
 
-        if (userBalance >= room.cellPrice) {
-            userRecord.balance -= room.cellPrice; 
-            userRecord.stats.totalSpent += room.cellPrice;
+        if (bonus + real >= price) {
+            if (bonus >= price) {
+                userRecord.balance_bonus -= price;
+            } else {
+                let remainder = price - bonus;
+                userRecord.balance_bonus = 0;
+                userRecord.balance_real -= remainder;
+            }
+            
+            userRecord.stats.totalSpent += price;
             userRecord.stats.gamesPlayed++;
-            room.bank += room.cellPrice;           
+            room.bank += price;           
             saveUsers();
             
             room.gameState[index] = {
@@ -439,7 +479,53 @@ io.on('connection', (socket) => {
             io.to(room.id).emit('update_state', room.gameState);
             io.emit('users_update', users);
             io.to(room.id).emit('game_update', { phase: room.gamePhase, timeLeft: room.timeLeft, bank: room.bank, cellPrice: room.cellPrice }); 
+        } else {
+            socket.emit('error', 'Недостаточно средств');
         }
+    });
+
+    socket.on('request_withdrawal', (data) => {
+        const tgId = socket.userData.telegram_id;
+        let userRecord = users[tgId];
+        if (!userRecord) return;
+        
+        const amount = data.amount || 0;
+        const wallet = data.wallet || '';
+        
+        if (amount < 500) {
+            socket.emit('withdrawal_error', 'Минимальная сумма вывода - 500 монет');
+            return;
+        }
+        
+        if ((userRecord.balance_real || 0) < amount) {
+            socket.emit('withdrawal_error', 'Недостаточно реальных монет для вывода');
+            return;
+        }
+        
+        userRecord.balance_real -= amount;
+        saveUsers();
+        io.emit('users_update', users);
+        
+        const withdrawId = `wd_${Date.now()}_${tgId}`;
+        const withdrawData = {
+            userId: tgId,
+            username: userRecord.name,
+            amount: amount,
+            wallet: wallet,
+            status: 'pending',
+            timestamp: Date.now()
+        };
+        
+        fetch(`${DB_URL_WITHDRAWALS.replace('.json', '')}/${withdrawId}.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(withdrawData)
+        }).then(() => {
+            socket.emit('withdrawal_success', 'Заявка на вывод успешно создана');
+        }).catch(err => {
+            console.error('Ошибка создания вывода', err);
+            socket.emit('withdrawal_error', 'Ошибка сервера при создании заявки');
+        });
     });
 
     socket.on('disconnect', () => {
@@ -535,7 +621,7 @@ async function checkTonTransactions() {
                             if (!users[tgId]) {
                                 users[tgId] = createUserObject(1000);
                             }
-                            users[tgId].balance += amountInCoins;
+                            users[tgId].balance_real += amountInCoins;
                             console.log(`Успешное пополнение: Игрок ${tgId} получил ${amountInCoins} монет за ${value} nanoGram.`);
                             saveUsers();
                             io.emit('users_update', users); // Обновляем балансы у всех (включая самого игрока)

@@ -47,7 +47,13 @@ class AppTranslations {
       'unlink': 'Unlink',
       'emojis_btn': 'Emojis 😀',
       'error_funds': 'Transaction cancelled. Ensure enough balance for transfer and network fees.',
-      'error_tx': 'Transaction error: '
+      'error_tx': 'Transaction error: ',
+      'withdraw': 'Withdraw',
+      'real_balance': 'Real Balance',
+      'bonus_balance': 'Bonus Balance',
+      'enter_wallet': 'Wallet address (TON)',
+      'amount': 'Amount',
+      'withdraw_btn': 'Submit Withdrawal'
     },
     'ru': {
       'room_selection': 'ВЫБОР КОМНАТЫ',
@@ -84,7 +90,13 @@ class AppTranslations {
       'unlink': 'Отвязать',
       'emojis_btn': 'Эмодзи 😀',
       'error_funds': 'Транзакция отменена. Убедитесь, что на балансе достаточно средств для перевода и оплаты комиссии сети.',
-      'error_tx': 'Ошибка транзакции: '
+      'error_tx': 'Ошибка транзакции: ',
+      'withdraw': 'Вывести',
+      'real_balance': 'Реальный баланс',
+      'bonus_balance': 'Бонусный баланс',
+      'enter_wallet': 'Адрес кошелька (TON)',
+      'amount': 'Сумма',
+      'withdraw_btn': 'Отправить заявку'
     }
   };
 
@@ -244,6 +256,24 @@ class _MainScreenState extends State<MainScreen> {
       });
     });
 
+    socket.on('error', (msg) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString(), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+      }
+    });
+
+    socket.on('withdrawal_success', (msg) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString(), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+      }
+    });
+
+    socket.on('withdrawal_error', (msg) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString(), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+      }
+    });
+
     socket.onDisconnect((_) {
       if (mounted) setState(() {
         _isConnected = false;
@@ -321,7 +351,7 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildLeaderboard() {
     var sortedUsers = users.values.toList();
-    sortedUsers.sort((a, b) => (b['balance'] ?? 0).compareTo(a['balance'] ?? 0));
+    sortedUsers.sort((a, b) => (((b['balance_real'] ?? 0) as num) + ((b['balance_bonus'] ?? 0) as num)).compareTo(((a['balance_real'] ?? 0) as num) + ((a['balance_bonus'] ?? 0) as num)));
     
     return ListView.builder(
       padding: const EdgeInsets.all(16.0),
@@ -344,7 +374,7 @@ class _MainScreenState extends State<MainScreen> {
             children: [
               const Icon(Icons.monetization_on, color: Colors.amber, size: 16),
               const SizedBox(width: 4),
-              Text('${u['balance'] ?? 0}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text('${((u['balance_real'] ?? 0) as num) + ((u['balance_bonus'] ?? 0) as num)}', style: const TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
         );
@@ -447,6 +477,60 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  Widget _buildWithdrawDialog() {
+    int amount = 500;
+    String wallet = _connectedWallet ?? '';
+    
+    return StatefulBuilder(builder: (context, setState) {
+      return AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: Text(AppTranslations.t('withdraw'), style: const TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              decoration: InputDecoration(
+                labelText: AppTranslations.t('amount'),
+                labelStyle: const TextStyle(color: Colors.white54),
+                enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.blueAccent)),
+              ),
+              keyboardType: TextInputType.number,
+              style: const TextStyle(color: Colors.white),
+              onChanged: (v) => amount = int.tryParse(v) ?? 0,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              decoration: InputDecoration(
+                labelText: AppTranslations.t('enter_wallet'),
+                labelStyle: const TextStyle(color: Colors.white54),
+                enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.blueAccent)),
+              ),
+              controller: TextEditingController(text: wallet)..selection = TextSelection.collapsed(offset: wallet.length),
+              style: const TextStyle(color: Colors.white),
+              onChanged: (v) => wallet = v,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppTranslations.t('cancel'), style: const TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+            onPressed: () {
+              socket.emit('request_withdrawal', {'amount': amount, 'wallet': wallet});
+              Navigator.pop(context);
+            },
+            child: Text(AppTranslations.t('withdraw_btn'), style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      );
+    });
+  }
+
   Widget _buildProfile() {
     var myData = users[_myTelegramId];
     if (myData == null) return const Center(child: CircularProgressIndicator());
@@ -470,10 +554,11 @@ class _MainScreenState extends State<MainScreen> {
           const SizedBox(height: 32),
           ListTile(
             title: Text(AppTranslations.t('bank')),
+            subtitle: Text('${AppTranslations.t('real_balance')}: ${myData['balance_real'] ?? 0} | ${AppTranslations.t('bonus_balance')}: ${myData['balance_bonus'] ?? 0}'),
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.monetization_on, color: Colors.amber),
               const SizedBox(width: 8),
-              Text('${myData['balance'] ?? 0}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('${((myData['balance_real'] ?? 0) as num) + ((myData['balance_bonus'] ?? 0) as num)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ]),
           ),
           ListTile(
@@ -520,6 +605,22 @@ class _MainScreenState extends State<MainScreen> {
               showDialog(
                 context: context,
                 builder: (context) => _buildDepositDialog(),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+              backgroundColor: Colors.blueAccent.withOpacity(0.2),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            ),
+            icon: const Icon(Icons.account_balance_wallet, color: Colors.blueAccent),
+            label: Text(AppTranslations.t('withdraw'), style: const TextStyle(fontSize: 20, color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => _buildWithdrawDialog(),
               );
             },
           ),
@@ -725,8 +826,8 @@ class _GameScreenState extends State<GameScreen> {
       if (mounted) setState(() {
         if (data is Map) {
           var k = data[widget.userData['telegram_id']] ?? data[int.tryParse(widget.userData['telegram_id']) ?? -1];
-          if (k != null && k['balance'] != null) {
-            _coins = (k['balance'] as num).toInt();
+          if (k != null) {
+            _coins = (((k['balance_real'] ?? 0) as num) + ((k['balance_bonus'] ?? 0) as num)).toInt();
           }
         }
       });
