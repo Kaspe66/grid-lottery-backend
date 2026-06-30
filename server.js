@@ -222,8 +222,9 @@ function finishRoulette(room, winningIndex) {
 
         let winAmountTotal = winAmountReal + winAmountBonus;
 
-        if (!users['_SYSTEM_']) users['_SYSTEM_'] = { commission_balance: 0 };
+        if (!users['_SYSTEM_']) users['_SYSTEM_'] = { commission_balance: 0, commission_bonus: 0 };
         users['_SYSTEM_'].commission_balance = (users['_SYSTEM_'].commission_balance || 0) + commissionReal;
+        users['_SYSTEM_'].commission_bonus = (users['_SYSTEM_'].commission_bonus || 0) + commissionBonus;
 
         rewardData = {
             hasWinner: true,
@@ -250,7 +251,7 @@ function finishRoulette(room, winningIndex) {
             username: winnerData.username,
             first_name: winnerData.first_name,
             photo_url: winnerData.photo_url,
-            bank: winAmount,
+            bank: winAmountTotal,
             cell: winningIndex + 1,
             color: winnerData.color
         });
@@ -259,8 +260,9 @@ function finishRoulette(room, winningIndex) {
     } else {
         // Никто не выиграл - деньги уходят проекту
         if (room.bank > 0) {
-            if (!users['_SYSTEM_']) users['_SYSTEM_'] = { commission_balance: 0 };
+            if (!users['_SYSTEM_']) users['_SYSTEM_'] = { commission_balance: 0, commission_bonus: 0 };
             users['_SYSTEM_'].commission_balance = (users['_SYSTEM_'].commission_balance || 0) + (room.bank_real || 0);
+            users['_SYSTEM_'].commission_bonus = (users['_SYSTEM_'].commission_bonus || 0) + (room.bank_bonus || 0);
             saveUsers();
         }
     }
