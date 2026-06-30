@@ -277,6 +277,16 @@ setInterval(() => {
     });
 }, 1000);
 
+function isRateLimited(socket) {
+    const now = Date.now();
+    if (!socket.lastActionTime) socket.lastActionTime = 0;
+    if (now - socket.lastActionTime < 300) {
+        return true;
+    }
+    socket.lastActionTime = now;
+    return false;
+}
+
 function broadcastRoomsUpdate() {
     const roomsInfo = rooms.map(r => ({
         id: r.id,
@@ -443,6 +453,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('click_cell', (index) => {
+        if (isRateLimited(socket)) return;
         const room = getRoom(socket.roomId);
         if (!room) return;
         if (room.gamePhase !== 'BETTING') return;
@@ -491,12 +502,18 @@ io.on('connection', (socket) => {
     });
 
     socket.on('request_withdrawal', (data) => {
+        if (isRateLimited(socket)) return;
         const tgId = socket.userData.telegram_id;
         let userRecord = users[tgId];
         if (!userRecord) return;
         
         const amount = data.amount || 0;
         const wallet = data.wallet || '';
+        
+        if (typeof wallet !== 'string' || wallet.length !== 48 || !(wallet.startsWith('UQ') || wallet.startsWith('EQ'))) {
+            socket.emit('withdrawal_error', 'Некорректный адрес кошелька TON. Он должен начинаться с UQ или EQ и содержать 48 символов.');
+            return;
+        }
         
         if (amount < 500) {
             socket.emit('withdrawal_error', 'Минимальная сумма вывода - 500 монет');
