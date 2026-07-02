@@ -55,7 +55,7 @@ function createUserObject(balance = 50) {
     return {
         balance_real: 0,
         balance_bonus: balance,
-        stats: { gamesPlayed: 0, wins: 0, totalWon: 0, totalSpent: 0 },
+        stats: { gamesPlayed: 0, wins: 0, totalWon: 0, totalWonReal: 0, totalWonBonus: 0, totalSpent: 0 },
         lastBonusClaim: 0,
         referredBy: null,
         referralsCount: 0,
@@ -259,12 +259,16 @@ function finishRoulette(room, winningIndex) {
             users[winnerData.telegram_id].balance_bonus += winAmountBonus;
             users[winnerData.telegram_id].stats.wins++;
             users[winnerData.telegram_id].stats.totalWon += winAmountTotal;
+            users[winnerData.telegram_id].stats.totalWonReal = (users[winnerData.telegram_id].stats.totalWonReal || 0) + winAmountReal;
+            users[winnerData.telegram_id].stats.totalWonBonus = (users[winnerData.telegram_id].stats.totalWonBonus || 0) + winAmountBonus;
         } else {
             users[winnerData.telegram_id] = createUserObject(50);
             users[winnerData.telegram_id].balance_real += winAmountReal;
             users[winnerData.telegram_id].balance_bonus += winAmountBonus;
             users[winnerData.telegram_id].stats.wins++;
             users[winnerData.telegram_id].stats.totalWon += winAmountTotal;
+            users[winnerData.telegram_id].stats.totalWonReal = winAmountReal;
+            users[winnerData.telegram_id].stats.totalWonBonus = winAmountBonus;
         }
         saveUsers();
         io.emit('users_update', users);

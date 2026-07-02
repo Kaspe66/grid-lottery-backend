@@ -58,7 +58,9 @@ class AppTranslations {
       'bonus_rooms': 'BONUS',
       'real_room': 'Real',
       'bonus_room': 'Bonus',
-      'room': 'Room'
+      'room': 'Room',
+      'total_won_real': 'Total Won (Real)',
+      'total_won_bonus': 'Total Won (Bonus)'
     },
     'ru': {
       'room_selection': 'ВЫБОР КОМНАТЫ',
@@ -106,7 +108,9 @@ class AppTranslations {
       'bonus_rooms': 'БОНУСНЫЕ',
       'real_room': 'Реал',
       'bonus_room': 'Бонус',
-      'room': 'Комната'
+      'room': 'Комната',
+      'total_won_real': 'Выиграно (Реал)',
+      'total_won_bonus': 'Выиграно (Бонусы)'
     }
   };
 
@@ -436,34 +440,73 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildLeaderboard() {
     var sortedUsers = users.values.toList();
-    sortedUsers.sort((a, b) => (((b['balance_real'] ?? 0) as num) + ((b['balance_bonus'] ?? 0) as num)).compareTo(((a['balance_real'] ?? 0) as num) + ((a['balance_bonus'] ?? 0) as num)));
+    if (_selectedCurrency == 'REAL') {
+      sortedUsers.sort((a, b) => ((b['stats']?['totalWonReal'] ?? 0) as num).compareTo((a['stats']?['totalWonReal'] ?? 0) as num));
+    } else {
+      sortedUsers.sort((a, b) => ((b['stats']?['totalWonBonus'] ?? 0) as num).compareTo((a['stats']?['totalWonBonus'] ?? 0) as num));
+    }
     
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemCount: sortedUsers.length,
-      itemBuilder: (context, index) {
-        var u = sortedUsers[index];
-        return ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Colors.blueAccent.withOpacity(0.3),
-            backgroundImage: u['photo_url'] != null && u['photo_url'].toString().isNotEmpty
-                ? NetworkImage('$backendUrl/avatar?url=${Uri.encodeComponent(u['photo_url'])}')
-                : null,
-            child: u['photo_url'] == null || u['photo_url'].toString().isEmpty
-                ? Text('${index + 1}')
-                : null,
-          ),
-          title: Text(u['name'] ?? 'User', style: const TextStyle(fontWeight: FontWeight.bold)),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.monetization_on, color: Colors.amber, size: 16),
-              const SizedBox(width: 4),
-              Text('${((u['balance_real'] ?? 0) as num) + ((u['balance_bonus'] ?? 0) as num)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              ChoiceChip(
+                label: Text(AppTranslations.t('real_rooms')),
+                selected: _selectedCurrency == 'REAL',
+                selectedColor: Colors.green.withOpacity(0.3),
+                onSelected: (val) {
+                  if (val) setState(() => _selectedCurrency = 'REAL');
+                },
+              ),
+              const SizedBox(width: 16),
+              ChoiceChip(
+                label: Text(AppTranslations.t('bonus_rooms')),
+                selected: _selectedCurrency == 'BONUS',
+                selectedColor: Colors.blue.withOpacity(0.3),
+                onSelected: (val) {
+                  if (val) setState(() => _selectedCurrency = 'BONUS');
+                },
+              ),
             ],
           ),
-        );
-      }
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            itemCount: sortedUsers.length,
+            itemBuilder: (context, index) {
+              var u = sortedUsers[index];
+              var stats = u['stats'] ?? {};
+              var wonValue = _selectedCurrency == 'REAL' ? (stats['totalWonReal'] ?? 0) : (stats['totalWonBonus'] ?? 0);
+              var iconColor = _selectedCurrency == 'REAL' ? Colors.green : Colors.blue;
+
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: iconColor.withOpacity(0.3),
+                  backgroundImage: u['photo_url'] != null && u['photo_url'].toString().isNotEmpty
+                      ? NetworkImage('$backendUrl/avatar?url=${Uri.encodeComponent(u['photo_url'])}')
+                      : null,
+                  child: u['photo_url'] == null || u['photo_url'].toString().isEmpty
+                      ? Text('${index + 1}', style: TextStyle(color: Colors.white))
+                      : null,
+                ),
+                title: Text(u['name'] ?? 'User', style: const TextStyle(fontWeight: FontWeight.bold)),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.monetization_on, color: iconColor, size: 20),
+                    const SizedBox(width: 6),
+                    Text('$wonValue', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  ],
+                ),
+              );
+            }
+          ),
+        ),
+      ],
     );
   }
 
@@ -621,28 +664,28 @@ class _MainScreenState extends State<MainScreen> {
     if (myData == null) return const Center(child: CircularProgressIndicator());
     var stats = myData['stats'] ?? {};
     
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           CircleAvatar(
-            radius: 50,
+            radius: 40,
             backgroundColor: Colors.white12,
             backgroundImage: _myPhotoUrl.isNotEmpty 
                 ? NetworkImage('$backendUrl/avatar?url=${Uri.encodeComponent(_myPhotoUrl)}') 
                 : null,
-            child: _myPhotoUrl.isEmpty ? const Icon(Icons.person, size: 50) : null,
+            child: _myPhotoUrl.isEmpty ? const Icon(Icons.person, size: 40) : null,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           Text(_myName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
           Card(
             color: Colors.white.withOpacity(0.05),
             margin: const EdgeInsets.symmetric(horizontal: 16),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
               child: Column(
                 children: [
                   Row(
@@ -658,7 +701,7 @@ class _MainScreenState extends State<MainScreen> {
                       )
                     ],
                   ),
-                  const Divider(color: Colors.white12, height: 24),
+                  const Divider(color: Colors.white12, height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -682,14 +725,22 @@ class _MainScreenState extends State<MainScreen> {
             trailing: Text('${stats['gamesPlayed'] ?? 0}', style: const TextStyle(fontSize: 18)),
           ),
           ListTile(
-            title: Text(AppTranslations.t('total_won')),
+            title: Text(AppTranslations.t('total_won_real')),
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.emoji_events, color: Colors.amber),
+              const Icon(Icons.monetization_on, color: Colors.green, size: 20),
               const SizedBox(width: 8),
-              Text('${stats['totalWon'] ?? 0}', style: const TextStyle(fontSize: 18)),
+              Text('${stats['totalWonReal'] ?? 0}', style: const TextStyle(fontSize: 18)),
             ]),
           ),
-          const SizedBox(height: 22), // Подняли на 10 пикселей (было 32)
+          ListTile(
+            title: Text(AppTranslations.t('total_won_bonus')),
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.monetization_on, color: Colors.blue, size: 20),
+              const SizedBox(width: 8),
+              Text('${stats['totalWonBonus'] ?? 0}', style: const TextStyle(fontSize: 18)),
+            ]),
+          ),
+          const SizedBox(height: 12),
           
           if (_connectedWallet != null) ...[
             Container(
@@ -742,12 +793,12 @@ class _MainScreenState extends State<MainScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 26),
+            const SizedBox(height: 12),
           ],
           
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               backgroundColor: Colors.greenAccent.withOpacity(0.2),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             ),
@@ -763,7 +814,7 @@ class _MainScreenState extends State<MainScreen> {
           const SizedBox(height: 16),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               backgroundColor: Colors.blueAccent.withOpacity(0.2),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             ),
