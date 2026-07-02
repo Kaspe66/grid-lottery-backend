@@ -163,6 +163,7 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   String _selectedCurrency = 'REAL';
   int _selectedPrice = 5;
+  bool _sortRoomsAscending = true;
 
   String _myName = 'User';
   String _myTelegramId = '123456789';
@@ -324,8 +325,17 @@ class _MainScreenState extends State<MainScreen> {
       return roomCurrency == _selectedCurrency && roomPrice == _selectedPrice;
     }).toList();
 
-    // 2. Sort by playersCount descending
-    filteredRooms.sort((a, b) => (b['playersCount'] as num).compareTo(a['playersCount'] as num));
+    // 2. Sort by room index (stable sorting)
+    filteredRooms.sort((a, b) {
+      int getIndex(dynamic r) {
+        if (r['id'] == null) return 0;
+        final match = RegExp(r'\d+').firstMatch(r['id'].toString());
+        return match != null ? int.parse(match.group(0)!) : 0;
+      }
+      int numA = getIndex(a);
+      int numB = getIndex(b);
+      return _sortRoomsAscending ? numA.compareTo(numB) : numB.compareTo(numA);
+    });
 
     return Column(
       children: [
@@ -356,23 +366,41 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
         
-        // Price Selector
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
+        // Price Selector and Sort Button
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
-            children: [5, 10, 20, 30, 50].map((price) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: ChoiceChip(
-                  label: Text('$price'),
-                  selected: _selectedPrice == price,
-                  selectedColor: Colors.amber.withOpacity(0.3),
-                  onSelected: (val) {
-                    if (val) setState(() => _selectedPrice = price);
-                  },
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [5, 10, 20, 30, 50].map((price) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: ChoiceChip(
+                          label: Text('$price'),
+                          selected: _selectedPrice == price,
+                          selectedColor: Colors.amber.withOpacity(0.3),
+                          onSelected: (val) {
+                            if (val) setState(() => _selectedPrice = price);
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
-              );
-            }).toList(),
+              ),
+              IconButton(
+                icon: Icon(_sortRoomsAscending ? Icons.arrow_downward : Icons.arrow_upward, color: Colors.white70),
+                onPressed: () {
+                  setState(() {
+                    _sortRoomsAscending = !_sortRoomsAscending;
+                  });
+                },
+                tooltip: 'Сортировка',
+              ),
+            ],
           ),
         ),
         
