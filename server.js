@@ -549,6 +549,27 @@ io.on('connection', (socket) => {
             io.to(room.id).emit('game_update', { phase: room.gamePhase, timeLeft: room.timeLeft, bank: room.bank, cellPrice: room.cellPrice }); 
     });
 
+    socket.on('claim_daily_bonus', () => {
+        if (isRateLimited(socket)) return;
+        const tgId = socket.userData.telegram_id;
+        let userRecord = users[tgId];
+        if (!userRecord) return;
+
+        const now = Date.now();
+        const lastClaim = userRecord.lastBonusClaim || 0;
+        const cooldown = 24 * 60 * 60 * 1000; // 24 hours
+
+        if (now - lastClaim >= cooldown) {
+            userRecord.balance_bonus += 50;
+            userRecord.lastBonusClaim = now;
+            saveUsers();
+            io.emit('users_update', users);
+            socket.emit('daily_bonus_success', 'Вы получили 50 бонусных монет!');
+        } else {
+            socket.emit('daily_bonus_error', 'Бонус пока недоступен');
+        }
+    });
+
     socket.on('request_withdrawal', (data) => {
         if (isRateLimited(socket)) return;
         const tgId = socket.userData.telegram_id;

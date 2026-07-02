@@ -170,6 +170,7 @@ class _MainScreenState extends State<MainScreen> {
   String _initData = '';
   String? _connectedWallet;
   Timer? _walletTimer;
+  Timer? _uiTimer;
 
   final String backendUrl = 'https://grid-lottery-backend.onrender.com';
 
@@ -179,6 +180,9 @@ class _MainScreenState extends State<MainScreen> {
     _initTelegramAndSocket();
     _walletTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
        _checkWallet();
+    });
+    _uiTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+       if (mounted && _currentIndex == 2) setState(() {});
     });
   }
 
@@ -196,6 +200,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void dispose() {
     _walletTimer?.cancel();
+    _uiTimer?.cancel();
     super.dispose();
   }
 
@@ -273,6 +278,18 @@ class _MainScreenState extends State<MainScreen> {
     });
 
     socket.on('error', (msg) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString(), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+      }
+    });
+
+    socket.on('daily_bonus_success', (msg) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString(), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+      }
+    });
+
+    socket.on('daily_bonus_error', (msg) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString(), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
       }
@@ -511,10 +528,58 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildQuests() {
+    var myData = users[_myTelegramId] ?? {};
+    var lastClaim = (myData['lastBonusClaim'] ?? 0) as num;
+    var now = DateTime.now().millisecondsSinceEpoch;
+    var cooldown = 24 * 60 * 60 * 1000;
+    var timePassed = now - lastClaim;
+    bool canClaim = timePassed >= cooldown;
+
+    String timerText = '';
+    if (!canClaim) {
+      var remaining = cooldown - timePassed;
+      var h = (remaining / (1000 * 60 * 60)).floor();
+      var m = ((remaining % (1000 * 60 * 60)) / (1000 * 60)).floor();
+      var s = ((remaining % (1000 * 60)) / 1000).floor();
+      timerText = '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    }
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          
+          Card(
+            color: Colors.blueAccent.withOpacity(0.05),
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: Colors.blueAccent.withOpacity(0.3))),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                children: [
+                  const Icon(Icons.card_giftcard, size: 64, color: Colors.blueAccent),
+                  const SizedBox(height: 16),
+                  Text(AppTranslations.t('daily_bonus'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  const Text('+50 Бонусных Монет', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                      backgroundColor: canClaim ? Colors.green : Colors.grey.withOpacity(0.3),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    ),
+                    onPressed: canClaim ? () {
+                      socket.emit('claim_daily_bonus');
+                    } : null,
+                    child: Text(canClaim ? AppTranslations.t('claim') : timerText, style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 48),
 
           Text(AppTranslations.t('invite_friend'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
