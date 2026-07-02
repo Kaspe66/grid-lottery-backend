@@ -49,7 +49,13 @@
 
     window.getConnectedWallet = function() {
       if (tonConnectUI && tonConnectUI.connected) {
-          return tonConnectUI.account.address;
+          const rawAddress = tonConnectUI.account.address;
+          try {
+              const address = new window.TonWeb.utils.Address(rawAddress);
+              return address.toString(true, true, true); // (isUserFriendly, isUrlSafe, isBounceable)
+          } catch(e) {
+              return rawAddress;
+          }
       }
       return null;
     };
