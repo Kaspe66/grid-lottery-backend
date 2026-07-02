@@ -140,12 +140,34 @@ function validateInitData(initData, token) {
 }
 
 // --- Игровые комнаты ---
-const rooms = [
-    { id: 'room_5', name: 'Песочница', cellPrice: 5, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, bank_real: 0, bank_bonus: 0, winnerHistory: [], rouletteInterval: null },
-    { id: 'room_10', name: 'Любитель', cellPrice: 10, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, bank_real: 0, bank_bonus: 0, winnerHistory: [], rouletteInterval: null },
-    { id: 'room_25', name: 'Профи', cellPrice: 25, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, bank_real: 0, bank_bonus: 0, winnerHistory: [], rouletteInterval: null },
-    { id: 'room_50', name: 'Элита', cellPrice: 50, maxPlayers: 7, players: new Set(), playersData: new Map(), gameState: Array(100).fill(null), gamePhase: 'WAITING', timeLeft: BETTING_TIME, bank: 0, bank_real: 0, bank_bonus: 0, winnerHistory: [], rouletteInterval: null },
-];
+const rooms = [];
+const prices = [5, 10, 20, 30, 50];
+const currencies = ['BONUS', 'REAL'];
+
+currencies.forEach(currency => {
+    prices.forEach(price => {
+        for (let i = 1; i <= 20; i++) {
+            let roomName = currency === 'BONUS' ? `Бонусы ${price} (Комната ${i})` : `Реал ${price} (Комната ${i})`;
+            rooms.push({
+                id: `room_${currency}_${price}_${i}`,
+                name: roomName,
+                cellPrice: price,
+                currency: currency,
+                maxPlayers: 7,
+                players: new Set(),
+                playersData: new Map(),
+                gameState: Array(100).fill(null),
+                gamePhase: 'WAITING',
+                timeLeft: BETTING_TIME,
+                bank: 0,
+                bank_real: 0,
+                bank_bonus: 0,
+                winnerHistory: [],
+                rouletteInterval: null
+            });
+        }
+    });
+});
 
 function getRoom(id) {
     return rooms.find(r => r.id === id);
@@ -306,6 +328,7 @@ function broadcastRoomsUpdate() {
         id: r.id,
         name: r.name,
         cellPrice: r.cellPrice,
+        currency: r.currency,
         maxPlayers: r.maxPlayers,
         playersCount: r.players.size
     }));
@@ -320,6 +343,7 @@ io.on('connection', (socket) => {
         id: r.id,
         name: r.name,
         cellPrice: r.cellPrice,
+        currency: r.currency,
         maxPlayers: r.maxPlayers,
         playersCount: r.players.size
     })));
@@ -485,17 +509,23 @@ io.on('connection', (socket) => {
         let bonus = userRecord.balance_bonus || 0;
         let real = userRecord.balance_real || 0;
 
-        if (bonus + real >= price) {
+        if (room.currency === 'REAL') {
+            if (real >= price) {
+                userRecord.balance_real -= price;
+                room.bank_real = (room.bank_real || 0) + price;
+            } else {
+                socket.emit('error', 'Недостаточно реальных средств');
+                return;
+            }
+        } else if (room.currency === 'BONUS') {
             if (bonus >= price) {
                 userRecord.balance_bonus -= price;
                 room.bank_bonus = (room.bank_bonus || 0) + price;
             } else {
-                let remainder = price - bonus;
-                userRecord.balance_bonus = 0;
-                userRecord.balance_real -= remainder;
-                room.bank_bonus = (room.bank_bonus || 0) + bonus;
-                room.bank_real = (room.bank_real || 0) + remainder;
+                socket.emit('error', 'Недостаточно бонусных средств');
+                return;
             }
+        }
             
             userRecord.stats.totalSpent += price;
             userRecord.stats.gamesPlayed++;
@@ -513,9 +543,6 @@ io.on('connection', (socket) => {
             io.to(room.id).emit('update_state', room.gameState);
             io.emit('users_update', users);
             io.to(room.id).emit('game_update', { phase: room.gamePhase, timeLeft: room.timeLeft, bank: room.bank, cellPrice: room.cellPrice }); 
-        } else {
-            socket.emit('error', 'Недостаточно средств');
-        }
     });
 
     socket.on('request_withdrawal', (data) => {

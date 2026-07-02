@@ -53,7 +53,12 @@ class AppTranslations {
       'bonus_balance': 'Bonus Balance',
       'enter_wallet': 'Wallet address (TON)',
       'amount': 'Amount',
-      'withdraw_btn': 'Submit Withdrawal'
+      'withdraw_btn': 'Submit Withdrawal',
+      'real_rooms': 'REAL',
+      'bonus_rooms': 'BONUS',
+      'real_room': 'Real',
+      'bonus_room': 'Bonus',
+      'room': 'Room'
     },
     'ru': {
       'room_selection': 'ВЫБОР КОМНАТЫ',
@@ -96,7 +101,12 @@ class AppTranslations {
       'bonus_balance': 'Бонусный баланс',
       'enter_wallet': 'Адрес кошелька (TON)',
       'amount': 'Сумма',
-      'withdraw_btn': 'Отправить заявку'
+      'withdraw_btn': 'Отправить заявку',
+      'real_rooms': 'РЕАЛЬНЫЕ',
+      'bonus_rooms': 'БОНУСНЫЕ',
+      'real_room': 'Реал',
+      'bonus_room': 'Бонус',
+      'room': 'Комната'
     }
   };
 
@@ -147,6 +157,8 @@ class _MainScreenState extends State<MainScreen> {
   Map<String, dynamic> users = {};
   bool _isConnected = false;
   int _currentIndex = 0;
+  String _selectedCurrency = 'REAL';
+  int _selectedPrice = 5;
 
   String _myName = 'User';
   String _myTelegramId = '123456789';
@@ -283,69 +295,142 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildLobby() {
     if (!_isConnected) return const Center(child: CircularProgressIndicator());
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemCount: rooms.length,
-      itemBuilder: (context, index) {
-        var room = rooms[index];
-        bool isFull = room['playersCount'] >= room['maxPlayers'];
-        String translatedRoomName = AppTranslations.t(room['name']);
+    
+    // 1. Filter rooms by currency and price
+    List<dynamic> filteredRooms = rooms.where((r) {
+      String roomCurrency = r['currency'] ?? 'REAL';
+      int roomPrice = (r['cellPrice'] as num).toInt();
+      return roomCurrency == _selectedCurrency && roomPrice == _selectedPrice;
+    }).toList();
 
-        return Card(
-          color: Colors.white.withOpacity(0.05),
-          margin: const EdgeInsets.only(bottom: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            title: Text(
-              translatedRoomName,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                '${AppTranslations.t('players')}: ${room['playersCount']} / ${room['maxPlayers']}',
-                style: TextStyle(
-                  color: isFull ? Colors.redAccent : Colors.greenAccent,
-                ),
+    // 2. Sort by playersCount descending
+    filteredRooms.sort((a, b) => (b['playersCount'] as num).compareTo(a['playersCount'] as num));
+
+    return Column(
+      children: [
+        // Currency Selector
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ChoiceChip(
+                label: Text(AppTranslations.t('real_rooms')),
+                selected: _selectedCurrency == 'REAL',
+                selectedColor: Colors.green.withOpacity(0.3),
+                onSelected: (val) {
+                  if (val) setState(() => _selectedCurrency = 'REAL');
+                },
               ),
-            ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.monetization_on, color: Colors.amber, size: 20),
-                const SizedBox(height: 4),
-                Text('${room['cellPrice']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ],
-            ),
-            onTap: () {
-              if (isFull) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(AppTranslations.t('room_full'))),
-                );
-                return;
+              const SizedBox(width: 16),
+              ChoiceChip(
+                label: Text(AppTranslations.t('bonus_rooms')),
+                selected: _selectedCurrency == 'BONUS',
+                selectedColor: Colors.blue.withOpacity(0.3),
+                onSelected: (val) {
+                  if (val) setState(() => _selectedCurrency = 'BONUS');
+                },
+              ),
+            ],
+          ),
+        ),
+        
+        // Price Selector
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [5, 10, 20, 30, 50].map((price) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                child: ChoiceChip(
+                  label: Text('$price'),
+                  selected: _selectedPrice == price,
+                  selectedColor: Colors.amber.withOpacity(0.3),
+                  onSelected: (val) {
+                    if (val) setState(() => _selectedPrice = price);
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Rooms List
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            itemCount: filteredRooms.length,
+            itemBuilder: (context, index) {
+              var room = filteredRooms[index];
+              bool isFull = room['playersCount'] >= room['maxPlayers'];
+              
+              String translatedRoomName = AppTranslations.t(room['name'] ?? '');
+              if (room['currency'] != null) {
+                String prefix = room['currency'] == 'REAL' ? AppTranslations.t('real_room') : AppTranslations.t('bonus_room');
+                String roomIdx = room['id'].toString().split('_').last;
+                translatedRoomName = '$prefix ${room['cellPrice']} (${AppTranslations.t('room')} $roomIdx)';
               }
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => GameScreen(
-                    socket: socket,
-                    roomId: room['id'],
-                    backendUrl: backendUrl,
-                    userData: {
-                      'initData': _initData,
-                      'username': _myName, 
-                      'first_name': _myName,
-                      'telegram_id': _myTelegramId,
-                      'photo_url': _myPhotoUrl,
-                    },
+
+              return Card(
+                color: Colors.white.withOpacity(0.05),
+                margin: const EdgeInsets.only(bottom: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  title: Text(
+                    translatedRoomName,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      '${AppTranslations.t('players')}: ${room['playersCount']} / ${room['maxPlayers']}',
+                      style: TextStyle(
+                        color: isFull ? Colors.redAccent : Colors.greenAccent,
+                      ),
+                    ),
+                  ),
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.monetization_on, color: _selectedCurrency == 'REAL' ? Colors.green : Colors.blue, size: 20),
+                      const SizedBox(height: 4),
+                      Text('${room['cellPrice']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ],
+                  ),
+                  onTap: () {
+                    if (isFull) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(AppTranslations.t('room_full'))),
+                      );
+                      return;
+                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => GameScreen(
+                          socket: socket,
+                          roomId: room['id'],
+                          backendUrl: backendUrl,
+                          userData: {
+                            'initData': _initData,
+                            'username': _myName, 
+                            'first_name': _myName,
+                            'telegram_id': _myTelegramId,
+                            'photo_url': _myPhotoUrl,
+                          },
+                        ),
+                      ),
+                    );
+                  },
                 ),
               );
             },
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 
@@ -552,15 +637,46 @@ class _MainScreenState extends State<MainScreen> {
           const SizedBox(height: 16),
           Text(_myName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 32),
-          ListTile(
-            title: Text(AppTranslations.t('bank')),
-            subtitle: Text('${AppTranslations.t('real_balance')}: ${myData['balance_real'] ?? 0} | ${AppTranslations.t('bonus_balance')}: ${myData['balance_bonus'] ?? 0}'),
-            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.monetization_on, color: Colors.amber),
-              const SizedBox(width: 8),
-              Text('${((myData['balance_real'] ?? 0) as num) + ((myData['balance_bonus'] ?? 0) as num)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            ]),
+          Card(
+            color: Colors.white.withOpacity(0.05),
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('${AppTranslations.t('real_balance')} (~${(((myData['balance_real'] ?? 0) as num) / 1000).toString()} Gram)', style: const TextStyle(fontSize: 14)),
+                      Row(
+                        children: [
+                          const Icon(Icons.monetization_on, color: Colors.green, size: 20),
+                          const SizedBox(width: 8),
+                          Text('${myData['balance_real'] ?? 0}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
+                        ],
+                      )
+                    ],
+                  ),
+                  const Divider(color: Colors.white12, height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(AppTranslations.t('bonus_balance'), style: const TextStyle(fontSize: 14)),
+                      Row(
+                        children: [
+                          const Icon(Icons.monetization_on, color: Colors.blue, size: 20),
+                          const SizedBox(width: 8),
+                          Text('${myData['balance_bonus'] ?? 0}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
+                        ],
+                      )
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
+          const SizedBox(height: 8),
           ListTile(
             title: Text(AppTranslations.t('games_played')),
             trailing: Text('${stats['gamesPlayed'] ?? 0}', style: const TextStyle(fontSize: 18)),
@@ -573,24 +689,60 @@ class _MainScreenState extends State<MainScreen> {
               Text('${stats['totalWon'] ?? 0}', style: const TextStyle(fontSize: 18)),
             ]),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 22), // Подняли на 10 пикселей (было 32)
           
           if (_connectedWallet != null) ...[
-            ListTile(
-              title: Text(AppTranslations.t('connected_wallet'), style: const TextStyle(color: Colors.white54)),
-              subtitle: Text(
-                '${_connectedWallet!.substring(0, 4)}...${_connectedWallet!.substring(_connectedWallet!.length - 4)}',
-                style: const TextStyle(fontSize: 18, color: Colors.blueAccent, fontWeight: FontWeight.bold),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.blueAccent.withOpacity(0.05),
+                border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(color: Colors.blueAccent.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                ],
               ),
-              trailing: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent.withOpacity(0.2)),
-                onPressed: () {
-                  try { js.context.callMethod('disconnectWallet'); } catch(e) {}
-                },
-                child: Text(AppTranslations.t('unlink'), style: const TextStyle(color: Colors.redAccent)),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blueAccent.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.wallet, color: Colors.blueAccent, size: 28),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(AppTranslations.t('connected_wallet'), style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_connectedWallet!.substring(0, 4)}...${_connectedWallet!.substring(_connectedWallet!.length - 4)}',
+                          style: const TextStyle(fontSize: 18, color: Colors.blueAccent, fontWeight: FontWeight.bold, letterSpacing: 1.1),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent.withOpacity(0.15),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: () {
+                      try { js.context.callMethod('disconnectWallet'); } catch(e) {}
+                    },
+                    child: Text(AppTranslations.t('unlink'), style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 26),
           ],
           
           ElevatedButton.icon(
@@ -827,7 +979,15 @@ class _GameScreenState extends State<GameScreen> {
         if (data is Map) {
           var k = data[widget.userData['telegram_id']] ?? data[int.tryParse(widget.userData['telegram_id']) ?? -1];
           if (k != null) {
-            _coins = (((k['balance_real'] ?? 0) as num) + ((k['balance_bonus'] ?? 0) as num)).toInt();
+            String roomType = 'REAL';
+            if (widget.roomId.split('_').length > 1) {
+              roomType = widget.roomId.split('_')[1];
+            }
+            if (roomType == 'REAL') {
+              _coins = ((k['balance_real'] ?? 0) as num).toInt();
+            } else {
+              _coins = ((k['balance_bonus'] ?? 0) as num).toInt();
+            }
           }
         }
       });
@@ -890,7 +1050,7 @@ class _GameScreenState extends State<GameScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.monetization_on, color: Colors.amber),
+            Icon(Icons.monetization_on, color: widget.roomId.split('_')[1] == 'REAL' ? Colors.green : Colors.blue),
             const SizedBox(width: 8),
             Text(
               '$_coins',
