@@ -723,6 +723,12 @@ async function checkTonTransactions() {
                             console.log(`Успешное пополнение: Игрок ${tgId} получил ${amountInCoins} монет за ${value} nanoGram.`);
                             saveUsers();
                             io.emit('users_update', users); // Обновляем балансы у всех (включая самого игрока)
+                            
+                            try {
+                                bot.telegram.sendMessage(tgId, `🎉 <b>Успешное пополнение!</b>\n\nВаш баланс пополнен на <b>${amountInCoins}</b> реальных монет.\n\nЖелаем приятной игры и крупных выигрышей! 🎲✨`, { parse_mode: 'HTML' });
+                            } catch (e) {
+                                console.error(`Ошибка отправки сообщения пользователю ${tgId}:`, e.message);
+                            }
                         }
                     }
                 }
