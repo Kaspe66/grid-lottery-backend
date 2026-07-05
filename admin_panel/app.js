@@ -86,7 +86,7 @@ async function loadDashboard() {
         const data = await apiFetch('/admin/stats');
         document.getElementById('stat-online').textContent = data.online;
         document.getElementById('stat-total').textContent = data.totalUsers;
-        document.getElementById('stat-real').textContent = data.systemReal;
+        document.getElementById('stat-real').innerHTML = `${data.systemReal} <span style="font-size:1rem;color:rgba(255,255,255,0.5)">(${(data.systemReal/1000).toFixed(2)} GRAM)</span>`;
         document.getElementById('stat-bonus').textContent = data.systemBonus;
         
         const mToggle = document.getElementById('maintenance-toggle');
@@ -147,7 +147,7 @@ function renderUsersTable() {
         tr.innerHTML = `
             <td>${id}</td>
             <td>${u.name || 'User'}</td>
-            <td>${u.balance_real || 0}</td>
+            <td>${u.balance_real || 0} <small style="color:rgba(255,255,255,0.5)">(${((u.balance_real || 0)/1000).toFixed(2)} GRAM)</small></td>
             <td>${u.balance_bonus || 0}</td>
             <td>${u.stats?.gamesPlayed || 0}</td>
             <td>${statusHtml}</td>
@@ -215,7 +215,7 @@ async function loadWithdrawals() {
             tr.innerHTML = `
                 <td>${new Date(w.timestamp).toLocaleString()}</td>
                 <td>${w.username} (${w.userId})</td>
-                <td><b>${w.amount}</b></td>
+                <td><b>${w.amount}</b> <small style="color:rgba(255,255,255,0.5)">(${ (w.amount/1000).toFixed(2) } GRAM)</small></td>
                 <td><small>${w.wallet}</small></td>
                 <td>${statusHtml}</td>
                 <td class="action-btns">${btns}</td>
@@ -246,7 +246,7 @@ async function loadDeposits() {
             tr.innerHTML = `
                 <td>${new Date(d.time).toLocaleString()}</td>
                 <td>${d.username} (${d.tgId})</td>
-                <td><b style="color:#10b981">+${d.amount}</b></td>
+                <td><b style="color:#10b981">+${d.amount}</b> <small style="color:rgba(255,255,255,0.5)">(${ (d.amount/1000).toFixed(2) } GRAM)</small></td>
                 <td>${d.valueNano}</td>
             `;
             tbody.appendChild(tr);
