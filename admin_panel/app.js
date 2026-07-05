@@ -144,10 +144,12 @@ function renderUsersTable() {
         const tr = document.createElement('tr');
         const statusHtml = u.banned ? '<span class="status-badge status-banned">Забанен</span>' : '<span class="status-badge status-active">Активен</span>';
         
+        const lockedHtml = u.balance_locked ? `<br><small style="color:#fbbf24">(+${u.balance_locked} в холде)</small>` : '';
+        
         tr.innerHTML = `
             <td>${id}</td>
             <td>${u.name || 'User'}</td>
-            <td>${u.balance_real || 0} <small style="color:rgba(255,255,255,0.5)">(${((u.balance_real || 0)/1000).toFixed(2)} GRAM)</small></td>
+            <td>${u.balance_real || 0} <small style="color:rgba(255,255,255,0.5)">(${((u.balance_real || 0)/1000).toFixed(2)} GRAM)</small>${lockedHtml}</td>
             <td>${u.balance_bonus || 0}</td>
             <td>${u.stats?.gamesPlayed || 0}</td>
             <td>${statusHtml}</td>

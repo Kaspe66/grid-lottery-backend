@@ -108,7 +108,8 @@ function createUserObject(balance = 50) {
         hasDeposited: false,
         name: 'User',
         photo_url: '',
-        banned: false
+        banned: false,
+        balance_locked: 0
     };
 }
 
@@ -682,6 +683,7 @@ io.on('connection', (socket) => {
         }
         
         userRecord.balance_real -= amount;
+        userRecord.balance_locked = (userRecord.balance_locked || 0) + amount;
         saveUsers();
         io.emit('users_update', users);
         
@@ -909,12 +911,21 @@ app.post('/admin/withdrawals/:id', requireAdmin, async (req, res) => {
         if (status === 'rejected') {
             const tgId = wd.userId;
             if (users[tgId]) {
+                users[tgId].balance_locked = (users[tgId].balance_locked || 0) - wd.amount;
+                if (users[tgId].balance_locked < 0) users[tgId].balance_locked = 0;
                 users[tgId].balance_real += wd.amount;
                 saveUsers();
                 io.emit('users_update', users);
                 try { bot.telegram.sendMessage(tgId, `❌ Ваша заявка на вывод ${wd.amount} монет отклонена. Монеты возвращены на баланс.`); } catch(e){}
             }
         } else if (status === 'approved') {
+            const tgId = wd.userId;
+            if (users[tgId]) {
+                users[tgId].balance_locked = (users[tgId].balance_locked || 0) - wd.amount;
+                if (users[tgId].balance_locked < 0) users[tgId].balance_locked = 0;
+                saveUsers();
+                io.emit('users_update', users);
+            }
             try { bot.telegram.sendMessage(wd.userId, `✅ Ваша заявка на вывод ${wd.amount} монет успешно обработана!`); } catch(e){}
         }
         

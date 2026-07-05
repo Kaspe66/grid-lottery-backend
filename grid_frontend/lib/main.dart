@@ -916,6 +916,22 @@ class _MainScreenState extends State<MainScreen> {
                       )
                     ],
                   ),
+                  if (((myData['balance_locked'] ?? 0) as num) > 0) ...[
+                    const Divider(color: Colors.white12, height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('На подтверждении на вывод:', style: TextStyle(fontSize: 14, color: Colors.amber)),
+                        Row(
+                          children: [
+                            const Icon(Icons.lock_clock, color: Colors.amber, size: 20),
+                            const SizedBox(width: 8),
+                            Text('${myData['balance_locked']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber)),
+                          ],
+                        )
+                      ],
+                    ),
+                  ],
                   const Divider(color: Colors.white12, height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
