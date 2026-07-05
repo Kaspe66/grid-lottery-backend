@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'dart:js' as js;
 import 'dart:async';
-import 'dart:ui'; 
+import 'dart:ui';
+import 'package:confetti/confetti.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 void main() {
   runApp(const GridLotteryApp());
@@ -60,7 +63,11 @@ class AppTranslations {
       'bonus_room': 'Bonus',
       'room': 'Room',
       'total_won_real': 'Total Won (Real)',
-      'total_won_bonus': 'Total Won (Bonus)'
+      'total_won_bonus': 'Total Won (Bonus)',
+      'settings': 'Settings',
+      'sound': 'Sound',
+      'vibration': 'Vibration',
+      'not_enough_funds_deposit': 'Not enough funds on balance, please deposit!'
     },
     'ru': {
       'room_selection': 'ВЫБОР КОМНАТЫ',
@@ -110,7 +117,11 @@ class AppTranslations {
       'bonus_room': 'Бонус',
       'room': 'Комната',
       'total_won_real': 'Выиграно (Реал)',
-      'total_won_bonus': 'Выиграно (Бонусы)'
+      'total_won_bonus': 'Выиграно (Бонусы)',
+      'settings': 'Настройки',
+      'sound': 'Звук',
+      'vibration': 'Вибрация',
+      'not_enough_funds_deposit': 'Недостаточно средств на балансе! Пожалуйста, пополните счет.'
     }
   };
 
@@ -175,9 +186,16 @@ class _MainScreenState extends State<MainScreen> {
 
   final String backendUrl = 'https://grid-lottery-backend.onrender.com';
 
+  bool _isSoundEnabled = true;
+  bool _isVibrationEnabled = true;
+  late ConfettiController _confettiController;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    _loadSettings();
     _initTelegramAndSocket();
     _walletTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
        _checkWallet();
@@ -198,10 +216,58 @@ class _MainScreenState extends State<MainScreen> {
     } catch(e) {}
   }
 
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _isSoundEnabled = prefs.getBool('sound_enabled') ?? true;
+        _isVibrationEnabled = prefs.getBool('vibration_enabled') ?? true;
+      });
+    }
+  }
+
+  void _toggleSound(bool val) {
+    setState(() {
+      _isSoundEnabled = val;
+    });
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setBool('sound_enabled', val);
+    }).catchError((e) {});
+  }
+
+  void _toggleVibration(bool val) {
+    setState(() {
+      _isVibrationEnabled = val;
+    });
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setBool('vibration_enabled', val);
+    }).catchError((e) {});
+  }
+
+  void _playHaptic(String type) {
+    if (!_isVibrationEnabled) return;
+    try {
+      if (type == 'success' || type == 'warning' || type == 'error') {
+        js.context['Telegram']['WebApp']['HapticFeedback'].callMethod('notificationOccurred', [type]);
+      } else {
+        js.context['Telegram']['WebApp']['HapticFeedback'].callMethod('impactOccurred', [type]);
+      }
+    } catch(e) {}
+  }
+
+  Future<void> _playSound(String url) async {
+    if (!_isSoundEnabled) return;
+    try {
+      await _audioPlayer.play(UrlSource(url));
+    } catch(e) {}
+  }
+
   @override
   void dispose() {
     _walletTimer?.cancel();
     _uiTimer?.cancel();
+    _confettiController.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -456,6 +522,25 @@ class _MainScreenState extends State<MainScreen> {
                       );
                       return;
                     }
+                    
+                    var myData = users[_myTelegramId] ?? {};
+                    num realBalance = (myData['balance_real'] ?? 0) as num;
+                    num bonusBalance = (myData['balance_bonus'] ?? 0) as num;
+                    num cellPrice = (room['cellPrice'] ?? 0) as num;
+                    bool isRealRoom = room['currency'] == 'REAL';
+
+                    if (isRealRoom && realBalance < cellPrice) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(AppTranslations.t('not_enough_funds_deposit'))),
+                      );
+                      return;
+                    } else if (!isRealRoom && bonusBalance < cellPrice) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(AppTranslations.t('not_enough_funds_deposit'))),
+                      );
+                      return;
+                    }
+
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -463,6 +548,9 @@ class _MainScreenState extends State<MainScreen> {
                           socket: socket,
                           roomId: room['id'],
                           backendUrl: backendUrl,
+                          playHaptic: _playHaptic,
+                          playSound: _playSound,
+                          confettiController: _confettiController,
                           userData: {
                             'initData': _initData,
                             'username': _myName, 
@@ -699,8 +787,14 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildWithdrawDialog() {
-    int amount = 500;
+    var myData = users[_myTelegramId];
+    int maxAmount = (myData != null && myData['balance_real'] != null) ? (myData['balance_real'] as num).toInt() : 0;
+    
+    int amount = maxAmount >= 500 ? 500 : maxAmount;
     String wallet = _connectedWallet ?? '';
+    
+    TextEditingController amountController = TextEditingController(text: amount > 0 ? amount.toString() : '');
+    TextEditingController walletController = TextEditingController(text: wallet)..selection = TextSelection.collapsed(offset: wallet.length);
     
     return StatefulBuilder(builder: (context, setState) {
       return AlertDialog(
@@ -709,7 +803,23 @@ class _MainScreenState extends State<MainScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('${AppTranslations.t('real_balance')}: $maxAmount', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      amount = maxAmount;
+                      amountController.text = amount.toString();
+                    });
+                  },
+                  child: const Text('MAX', style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 12)),
+                )
+              ],
+            ),
             TextField(
+              controller: amountController,
               decoration: InputDecoration(
                 labelText: AppTranslations.t('amount'),
                 labelStyle: const TextStyle(color: Colors.white54),
@@ -728,7 +838,7 @@ class _MainScreenState extends State<MainScreen> {
                 enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
                 focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.blueAccent)),
               ),
-              controller: TextEditingController(text: wallet)..selection = TextSelection.collapsed(offset: wallet.length),
+              controller: walletController,
               style: const TextStyle(color: Colors.white),
               onChanged: (v) => wallet = v,
             ),
@@ -833,6 +943,30 @@ class _MainScreenState extends State<MainScreen> {
               Text('${stats['totalWonBonus'] ?? 0}', style: const TextStyle(fontSize: 18)),
             ]),
           ),
+          const SizedBox(height: 16),
+          const Divider(color: Colors.white12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(AppTranslations.t('settings'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white70)),
+            ),
+          ),
+          SwitchListTile(
+            title: Text(AppTranslations.t('sound')),
+            value: _isSoundEnabled,
+            onChanged: _toggleSound,
+            activeColor: Colors.blueAccent,
+            secondary: Icon(_isSoundEnabled ? Icons.volume_up : Icons.volume_off, color: Colors.blueAccent),
+          ),
+          SwitchListTile(
+            title: Text(AppTranslations.t('vibration')),
+            value: _isVibrationEnabled,
+            onChanged: _toggleVibration,
+            activeColor: Colors.blueAccent,
+            secondary: Icon(_isVibrationEnabled ? Icons.vibration : Icons.smartphone, color: Colors.blueAccent),
+          ),
+          const Divider(color: Colors.white12),
           const SizedBox(height: 12),
           
           if (_connectedWallet != null) ...[
@@ -984,6 +1118,9 @@ class GameScreen extends StatefulWidget {
   final String roomId;
   final String backendUrl;
   final Map<String, dynamic> userData;
+  final Function(String) playHaptic;
+  final Function(String) playSound;
+  final ConfettiController confettiController;
 
   const GameScreen({
     super.key,
@@ -991,6 +1128,9 @@ class GameScreen extends StatefulWidget {
     required this.roomId,
     required this.backendUrl,
     required this.userData,
+    required this.playHaptic,
+    required this.playSound,
+    required this.confettiController,
   });
 
   @override
@@ -1011,9 +1151,28 @@ class _GameScreenState extends State<GameScreen> {
   List<dynamic> _gameState = List.filled(100, null);
   List<dynamic> _roomPlayers = [];
 
-  
   List<Widget> _floatingEmojis = [];
   bool _showEmojis = false;
+
+  void _onUsersUpdate(dynamic data) {
+    if (mounted) setState(() {
+      if (data is Map) {
+        var k = data[widget.userData['telegram_id']] ?? data[int.tryParse(widget.userData['telegram_id']) ?? -1];
+        if (k != null) {
+          String roomType = 'REAL';
+          if (widget.roomId.split('_').length > 1) {
+            roomType = widget.roomId.split('_')[1];
+          }
+          if (roomType == 'REAL') {
+            _coins = ((k['balance_real'] ?? 0) as num).toInt();
+          } else {
+            _coins = ((k['balance_bonus'] ?? 0) as num).toInt();
+          }
+        }
+      }
+    });
+  }
+
 @override
   void initState() {
     super.initState();
@@ -1087,7 +1246,13 @@ class _GameScreenState extends State<GameScreen> {
 
     widget.socket.on('game_update', (data) {
       if (mounted) setState(() {
+        String oldPhase = _phase;
         if (data['phase'] != null) _phase = data['phase'];
+        if (oldPhase == 'WAITING' && _phase == 'BETTING') {
+           widget.playHaptic('warning');
+           widget.playSound('https://actions.google.com/sounds/v1/alarms/beep_short.ogg'); // neutral start beep
+        }
+
         if (data['timeLeft'] != null) _timeLeft = data['timeLeft'];
         if (data['bank'] != null) _bank = data['bank'];
         if (data['cellPrice'] != null) _cellPrice = data['cellPrice'];
@@ -1099,6 +1264,11 @@ class _GameScreenState extends State<GameScreen> {
               'username': rd['username'].toString(),
               'bank': rd['bank'].toString(),
             });
+            if (rd['telegram_id'].toString() == widget.userData['telegram_id'].toString()) {
+               widget.playHaptic('success');
+               widget.playSound('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3'); // win fanfare
+               widget.confettiController.play();
+            }
           } else {
              _winnerMessage = AppTranslations.t('nobody_won', {
                'cell': rd['cell'].toString(),
@@ -1118,26 +1288,10 @@ class _GameScreenState extends State<GameScreen> {
       });
     });
 
-    widget.socket.on('users_update', (data) {
-      if (mounted) setState(() {
-        if (data is Map) {
-          var k = data[widget.userData['telegram_id']] ?? data[int.tryParse(widget.userData['telegram_id']) ?? -1];
-          if (k != null) {
-            String roomType = 'REAL';
-            if (widget.roomId.split('_').length > 1) {
-              roomType = widget.roomId.split('_')[1];
-            }
-            if (roomType == 'REAL') {
-              _coins = ((k['balance_real'] ?? 0) as num).toInt();
-            } else {
-              _coins = ((k['balance_bonus'] ?? 0) as num).toInt();
-            }
-          }
-        }
-      });
-    });
+    widget.socket.on('users_update', _onUsersUpdate);
 
     widget.socket.on('roulette_tick', (index) {
+      widget.playHaptic('light');
       if (mounted) setState(() {
         _rouletteCell = index;
       });
@@ -1161,7 +1315,7 @@ class _GameScreenState extends State<GameScreen> {
     widget.socket.off('update_state');
     widget.socket.off('history_update');
     widget.socket.off('game_update');
-    widget.socket.off('users_update');
+    widget.socket.off('users_update', _onUsersUpdate);
     widget.socket.off('roulette_tick');
     widget.socket.off('roulette_finish');
     
@@ -1393,6 +1547,8 @@ class _GameScreenState extends State<GameScreen> {
                             onTap: () {
                               if (_phase != 'BETTING') return; 
                               if (!isTaken && _coins >= _cellPrice) {
+                                widget.playHaptic('light');
+                                widget.playSound('https://actions.google.com/sounds/v1/ui/button_click.ogg');
                                 widget.socket.emit('click_cell', index);
                               } else if (_coins < _cellPrice) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -1515,6 +1671,17 @@ class _GameScreenState extends State<GameScreen> {
         ),
       ),
       ..._floatingEmojis,
+      Align(
+        alignment: Alignment.center,
+        child: ConfettiWidget(
+          confettiController: widget.confettiController,
+          blastDirectionality: BlastDirectionality.explosive,
+          shouldLoop: false,
+          colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple],
+          numberOfParticles: 50,
+          gravity: 0.1,
+        ),
+      ),
     ],),
     );
   }
