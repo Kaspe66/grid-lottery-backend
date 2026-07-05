@@ -10,6 +10,8 @@ const webAppUrl = 'https://grid-lottery-game.web.app/?v=2';
 
 const bot = new Telegraf(token);
 const app = express();
+app.use(express.json());
+app.use('/admin', express.static(path.join(__dirname, 'admin_panel')));
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
@@ -45,6 +47,9 @@ bot.launch();
 const BETTING_TIME = 60; 
 const ROULETTE_TIME = 8; 
 const REWARD_TIME = 5;   
+
+let maintenanceMode = false;
+let onlineSockets = new Set();
 
 let users = {}; 
 const DB_URL_USERS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/users.json';
@@ -340,6 +345,7 @@ function broadcastRoomsUpdate() {
 }
 
 io.on('connection', (socket) => {
+    onlineSockets.add(socket.id);
     console.log(`Игрок подключился. Socket ID: ${socket.id}`);
 
     // Отправляем список комнат при подключении
@@ -393,6 +399,10 @@ io.on('connection', (socket) => {
     });
 
     socket.on('join_room', (data, callback) => {
+        if (maintenanceMode) {
+            if (callback) callback({ success: false, message: 'Сервер на тех. обслуживании. Возвращайтесь позже!' });
+            return;
+        }
         const { roomId, userData } = data;
         const room = getRoom(roomId);
         
@@ -495,6 +505,10 @@ io.on('connection', (socket) => {
     });
 
     socket.on('click_cell', (index) => {
+        if (maintenanceMode) {
+            socket.emit('error', 'Идут технические работы. Ставки временно недоступны.');
+            return;
+        }
         if (isRateLimited(socket)) return;
         const room = getRoom(socket.roomId);
         if (!room) return;
@@ -626,6 +640,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
+        onlineSockets.delete(socket.id);
         handleLeaveRoom(socket);
         console.log(`Игрок отключился: ${socket.id}`);
     });
@@ -743,6 +758,61 @@ async function checkTonTransactions() {
 }
 
 setInterval(checkTonTransactions, 15000); // Проверяем каждые 15 секунд
+// ==========================================
+
+// ==========================================
+// ADMIN API
+// ==========================================
+const ADMIN_PASSWORD = 'Admin2026';
+
+app.post('/admin/login', (req, res) => {
+    if (req.body.password === ADMIN_PASSWORD) {
+        res.json({ success: true, token: 'admin-token-123' });
+    } else {
+        res.status(401).json({ success: false, message: 'Неверный пароль' });
+    }
+});
+
+const requireAdmin = (req, res, next) => {
+    if (req.headers.authorization === 'Bearer admin-token-123') {
+        next();
+    } else {
+        res.status(401).json({ success: false, message: 'Необходима авторизация' });
+    }
+};
+
+app.get('/admin/stats', requireAdmin, (req, res) => {
+    let totalUsers = Object.keys(users).filter(k => k !== '_SYSTEM_').length;
+    let systemStats = users['_SYSTEM_'] || { commission_balance: 0, commission_bonus: 0 };
+    res.json({
+        success: true,
+        online: onlineSockets.size,
+        totalUsers: totalUsers,
+        systemReal: systemStats.commission_balance || 0,
+        systemBonus: systemStats.commission_bonus || 0,
+        maintenance: maintenanceMode
+    });
+});
+
+app.post('/admin/maintenance', requireAdmin, (req, res) => {
+    maintenanceMode = !!req.body.active;
+    res.json({ success: true, maintenance: maintenanceMode });
+});
+
+app.post('/admin/broadcast', requireAdmin, async (req, res) => {
+    const message = req.body.message;
+    if (!message) return res.status(400).json({ success: false, message: 'Пустое сообщение' });
+    
+    res.json({ success: true, message: 'Рассылка запущена' });
+    
+    const userIds = Object.keys(users).filter(k => k !== '_SYSTEM_');
+    for (const tgId of userIds) {
+        try {
+            await bot.telegram.sendMessage(tgId, message, { parse_mode: 'HTML' });
+        } catch (e) {}
+        await new Promise(r => setTimeout(r, 50)); // ~20 msgs per sec
+    }
+});
 // ==========================================
 
 const PORT = process.env.PORT || 3000;

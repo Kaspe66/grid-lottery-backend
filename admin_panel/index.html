@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GridLottery - Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="login-container" class="glass-panel">
+        <h1>🔐 Вход в Админ-Панель</h1>
+        <p>Введите пароль администратора для доступа</p>
+        <input type="password" id="admin-password" placeholder="Пароль..." />
+        <button id="login-btn">Войти</button>
+        <div id="login-error" class="error-msg"></div>
+    </div>
+
+    <div id="dashboard-container" class="hidden">
+        <header class="glass-panel header">
+            <h1>GridLottery Admin ✨</h1>
+            <button id="logout-btn">Выйти</button>
+        </header>
+
+        <main class="dashboard-grid">
+            <div class="stat-card glass-panel">
+                <div class="stat-icon">👥</div>
+                <div class="stat-info">
+                    <h3>Онлайн</h3>
+                    <p id="stat-online">0</p>
+                </div>
+            </div>
+            
+            <div class="stat-card glass-panel">
+                <div class="stat-icon">🌍</div>
+                <div class="stat-info">
+                    <h3>Всего игроков</h3>
+                    <p id="stat-total">0</p>
+                </div>
+            </div>
+
+            <div class="stat-card glass-panel">
+                <div class="stat-icon">💰</div>
+                <div class="stat-info">
+                    <h3>Комиссия (Реал)</h3>
+                    <p id="stat-real">0</p>
+                </div>
+            </div>
+
+            <div class="stat-card glass-panel">
+                <div class="stat-icon">💎</div>
+                <div class="stat-info">
+                    <h3>Комиссия (Бонусы)</h3>
+                    <p id="stat-bonus">0</p>
+                </div>
+            </div>
+
+            <div class="action-card glass-panel span-2">
+                <h2>📣 Массовая рассылка</h2>
+                <p>Отправьте сообщение всем пользователям бота.</p>
+                <textarea id="broadcast-msg" placeholder="Введите текст сообщения... Поддерживается HTML (например, <b>Жирный</b>)"></textarea>
+                <button id="broadcast-btn">Отправить рассылку</button>
+                <div id="broadcast-status"></div>
+            </div>
+
+            <div class="action-card glass-panel span-2 danger-zone">
+                <h2>⚠️ Технические работы</h2>
+                <p>Включение этого режима запретит игрокам заходить в комнаты и делать ставки.</p>
+                <div class="toggle-container">
+                    <label class="switch">
+                        <input type="checkbox" id="maintenance-toggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span id="maintenance-status-text">Режим выключен</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
