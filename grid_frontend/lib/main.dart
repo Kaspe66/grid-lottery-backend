@@ -184,6 +184,18 @@ class _MainScreenState extends State<MainScreen> {
   Timer? _walletTimer;
   Timer? _uiTimer;
 
+  String _formatBalance(num balance) {
+    if (balance >= 1000) {
+      double k = balance / 1000.0;
+      if (k == k.truncateToDouble()) {
+        return '${k.toInt()}K';
+      } else {
+        return '${k.toStringAsFixed(1)}K';
+      }
+    }
+    return balance.toString();
+  }
+
   final String backendUrl = 'https://grid-lottery-backend.onrender.com';
 
   bool _isSoundEnabled = true;
@@ -1080,6 +1092,33 @@ class _MainScreenState extends State<MainScreen> {
       appBar: AppBar(
         title: Text(titles[_currentIndex], style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2)),
         centerTitle: true,
+        actions: [
+          if (_currentIndex == 0)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.monetization_on,
+                      color: _selectedCurrency == 'REAL' ? Colors.green : Colors.blue,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _formatBalance((users[_myTelegramId]?['balance_${_selectedCurrency.toLowerCase()}'] ?? 0) as num),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: _selectedCurrency == 'REAL' ? Colors.green : Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
