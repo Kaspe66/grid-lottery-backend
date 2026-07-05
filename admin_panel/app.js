@@ -1,34 +1,22 @@
-const loginContainer = document.getElementById('login-container');
-const dashboardContainer = document.getElementById('dashboard-container');
-const passwordInput = document.getElementById('admin-password');
-const loginBtn = document.getElementById('login-btn');
-const logoutBtn = document.getElementById('logout-btn');
-const loginError = document.getElementById('login-error');
-
-const statOnline = document.getElementById('stat-online');
-const statTotal = document.getElementById('stat-total');
-const statReal = document.getElementById('stat-real');
-const statBonus = document.getElementById('stat-bonus');
-
-const broadcastMsg = document.getElementById('broadcast-msg');
-const broadcastBtn = document.getElementById('broadcast-btn');
-const broadcastStatus = document.getElementById('broadcast-status');
-
-const maintenanceToggle = document.getElementById('maintenance-toggle');
-const maintenanceText = document.getElementById('maintenance-status-text');
-
 let adminToken = localStorage.getItem('adminToken');
 let refreshInterval = null;
+let currentEditingUserId = null;
+let allUsersData = {};
 
-// Initialization
-if (adminToken) {
-    showDashboard();
-}
+// DOM Elements
+const loginContainer = document.getElementById('login-container');
+const appContainer = document.getElementById('app-container');
+const loginBtn = document.getElementById('login-btn');
+const logoutBtn = document.getElementById('logout-btn');
+const navBtns = document.querySelectorAll('.nav-btn');
+const tabs = document.querySelectorAll('.tab-content');
 
+if (adminToken) showApp();
+
+// --- AUTH ---
 loginBtn.addEventListener('click', async () => {
-    const pwd = passwordInput.value;
+    const pwd = document.getElementById('admin-password').value;
     if (!pwd) return;
-
     try {
         const res = await fetch('/admin/login', {
             method: 'POST',
@@ -36,16 +24,15 @@ loginBtn.addEventListener('click', async () => {
             body: JSON.stringify({ password: pwd })
         });
         const data = await res.json();
-        
         if (data.success) {
             adminToken = data.token;
             localStorage.setItem('adminToken', adminToken);
-            showDashboard();
+            showApp();
         } else {
-            loginError.textContent = data.message || 'Ошибка входа';
+            document.getElementById('login-error').textContent = data.message;
         }
     } catch (e) {
-        loginError.textContent = 'Ошибка сети';
+        document.getElementById('login-error').textContent = 'Ошибка сети';
     }
 });
 
@@ -54,109 +41,260 @@ logoutBtn.addEventListener('click', () => {
     adminToken = null;
     if (refreshInterval) clearInterval(refreshInterval);
     loginContainer.classList.remove('hidden');
-    dashboardContainer.classList.add('hidden');
-    passwordInput.value = '';
-    loginError.textContent = '';
+    appContainer.classList.add('hidden');
 });
 
-function showDashboard() {
+function showApp() {
     loginContainer.classList.add('hidden');
-    dashboardContainer.classList.remove('hidden');
-    fetchStats();
+    appContainer.classList.remove('hidden');
+    loadActiveTab();
     if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(fetchStats, 5000);
+    refreshInterval = setInterval(loadActiveTab, 5000);
 }
 
-async function fetchStats() {
+// --- TABS ---
+navBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        navBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        tabs.forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        loadActiveTab();
+    });
+});
+
+function loadActiveTab() {
+    const activeTab = document.querySelector('.nav-btn.active').dataset.tab;
+    if (activeTab === 'dashboard') loadDashboard();
+    if (activeTab === 'users') loadUsers();
+    if (activeTab === 'withdrawals') loadWithdrawals();
+    if (activeTab === 'settings') loadSettings();
+    if (activeTab === 'logs') loadLogs();
+    if (activeTab === 'deposits') loadDeposits();
+}
+
+async function apiFetch(url, options = {}) {
+    options.headers = { ...options.headers, 'Authorization': 'Bearer ' + adminToken };
+    const res = await fetch(url, options);
+    if (res.status === 401) { logoutBtn.click(); throw new Error('Unauthorized'); }
+    return res.json();
+}
+
+// --- DASHBOARD ---
+async function loadDashboard() {
     try {
-        const res = await fetch('/admin/stats', {
-            headers: { 'Authorization': 'Bearer ' + adminToken }
-        });
+        const data = await apiFetch('/admin/stats');
+        document.getElementById('stat-online').textContent = data.online;
+        document.getElementById('stat-total').textContent = data.totalUsers;
+        document.getElementById('stat-real').textContent = data.systemReal;
+        document.getElementById('stat-bonus').textContent = data.systemBonus;
         
-        if (res.status === 401) {
-            logoutBtn.click();
-            return;
-        }
+        const mToggle = document.getElementById('maintenance-toggle');
+        const mText = document.getElementById('maintenance-status-text');
+        if (mToggle.checked !== data.maintenance) mToggle.checked = data.maintenance;
+        mText.textContent = data.maintenance ? 'Режим включен' : 'Режим выключен';
+        mText.style.color = data.maintenance ? '#ef4444' : '#fff';
+    } catch (e) {}
+}
+
+document.getElementById('maintenance-toggle').addEventListener('change', async (e) => {
+    await apiFetch('/admin/maintenance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: e.target.checked })
+    });
+    loadDashboard();
+});
+
+document.getElementById('broadcast-btn').addEventListener('click', async (e) => {
+    const msg = document.getElementById('broadcast-msg').value;
+    if (!msg) return;
+    e.target.disabled = true;
+    e.target.textContent = 'Отправка...';
+    const data = await apiFetch('/admin/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+    });
+    document.getElementById('broadcast-status').textContent = data.success ? 'Успешно!' : 'Ошибка';
+    setTimeout(() => { document.getElementById('broadcast-status').textContent = ''; e.target.disabled = false; e.target.textContent = 'Отправить рассылку'; }, 2000);
+});
+
+// --- USERS ---
+async function loadUsers() {
+    try {
+        const data = await apiFetch('/admin/users');
+        allUsersData = data.users;
+        renderUsersTable();
+    } catch(e) {}
+}
+
+document.getElementById('user-search').addEventListener('input', renderUsersTable);
+
+function renderUsersTable() {
+    const tbody = document.getElementById('users-tbody');
+    const query = document.getElementById('user-search').value.toLowerCase();
+    tbody.innerHTML = '';
+    
+    Object.keys(allUsersData).forEach(id => {
+        if (id === '_SYSTEM_') return;
+        const u = allUsersData[id];
+        if (query && !id.includes(query) && !(u.name && u.name.toLowerCase().includes(query))) return;
         
-        const data = await res.json();
-        if (data.success) {
-            statOnline.textContent = data.online;
-            statTotal.textContent = data.totalUsers;
-            statReal.textContent = data.systemReal;
-            statBonus.textContent = data.systemBonus;
+        const tr = document.createElement('tr');
+        const statusHtml = u.banned ? '<span class="status-badge status-banned">Забанен</span>' : '<span class="status-badge status-active">Активен</span>';
+        
+        tr.innerHTML = `
+            <td>${id}</td>
+            <td>${u.name || 'User'}</td>
+            <td>${u.balance_real || 0}</td>
+            <td>${u.balance_bonus || 0}</td>
+            <td>${u.stats?.gamesPlayed || 0}</td>
+            <td>${statusHtml}</td>
+            <td class="action-btns">
+                <button class="btn-success" onclick="editUser('${id}')">Изменить</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function editUser(id) {
+    currentEditingUserId = id;
+    const u = allUsersData[id];
+    document.getElementById('modal-real').value = u.balance_real || 0;
+    document.getElementById('modal-bonus').value = u.balance_bonus || 0;
+    document.getElementById('modal-banned').checked = !!u.banned;
+    document.getElementById('user-modal').classList.remove('hidden');
+}
+
+document.getElementById('modal-close').addEventListener('click', () => {
+    document.getElementById('user-modal').classList.add('hidden');
+});
+
+document.getElementById('modal-save').addEventListener('click', async () => {
+    if (!currentEditingUserId) return;
+    const body = {
+        balance_real: document.getElementById('modal-real').value,
+        balance_bonus: document.getElementById('modal-bonus').value,
+        banned: document.getElementById('modal-banned').checked
+    };
+    await apiFetch('/admin/users/' + currentEditingUserId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    document.getElementById('user-modal').classList.add('hidden');
+    loadUsers();
+});
+
+// --- WITHDRAWALS ---
+async function loadWithdrawals() {
+    try {
+        const data = await apiFetch('/admin/withdrawals');
+        const tbody = document.getElementById('withdrawals-tbody');
+        tbody.innerHTML = '';
+        const items = Object.keys(data.withdrawals || {}).map(k => ({id:k, ...data.withdrawals[k]})).sort((a,b)=>b.timestamp-a.timestamp);
+        
+        items.forEach(w => {
+            let statusHtml = '';
+            let btns = '';
+            if (w.status === 'pending') {
+                statusHtml = '<span class="status-badge status-pending">Ожидает</span>';
+                btns = `
+                    <button class="btn-success" onclick="processWithdrawal('${w.id}', 'approved')">Одобрить</button>
+                    <button class="btn-danger" onclick="processWithdrawal('${w.id}', 'rejected')">Отклонить</button>
+                `;
+            } else if (w.status === 'approved') {
+                statusHtml = '<span class="status-badge status-active">Выплачено</span>';
+            } else {
+                statusHtml = '<span class="status-badge status-banned">Отклонено</span>';
+            }
             
-            maintenanceToggle.checked = data.maintenance;
-            updateMaintenanceText(data.maintenance);
-        }
-    } catch (e) {
-        console.error('Ошибка загрузки статистики:', e);
-    }
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${new Date(w.timestamp).toLocaleString()}</td>
+                <td>${w.username} (${w.userId})</td>
+                <td><b>${w.amount}</b></td>
+                <td><small>${w.wallet}</small></td>
+                <td>${statusHtml}</td>
+                <td class="action-btns">${btns}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch(e) {}
 }
 
-function updateMaintenanceText(isOn) {
-    if (isOn) {
-        maintenanceText.textContent = 'Режим включен';
-        maintenanceText.style.color = '#ef4444';
-    } else {
-        maintenanceText.textContent = 'Режим выключен';
-        maintenanceText.style.color = '#fff';
-    }
+window.processWithdrawal = async function(id, status) {
+    if (!confirm(status === 'approved' ? 'Пометить как выплаченную?' : 'Отклонить заявку и вернуть монеты игроку?')) return;
+    await apiFetch('/admin/withdrawals/' + id, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+    });
+    loadWithdrawals();
 }
 
-maintenanceToggle.addEventListener('change', async (e) => {
-    const isActive = e.target.checked;
-    updateMaintenanceText(isActive);
-    
+// --- DEPOSITS ---
+async function loadDeposits() {
     try {
-        await fetch('/admin/maintenance', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + adminToken
-            },
-            body: JSON.stringify({ active: isActive })
+        const data = await apiFetch('/admin/deposits');
+        const tbody = document.getElementById('deposits-tbody');
+        tbody.innerHTML = '';
+        data.deposits.forEach(d => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${new Date(d.time).toLocaleString()}</td>
+                <td>${d.username} (${d.tgId})</td>
+                <td><b style="color:#10b981">+${d.amount}</b></td>
+                <td>${d.valueNano}</td>
+            `;
+            tbody.appendChild(tr);
         });
-    } catch (e) {
-        console.error('Ошибка переключения режима', e);
-    }
+    } catch(e) {}
+}
+
+// --- SETTINGS ---
+async function loadSettings() {
+    try {
+        const data = await apiFetch('/admin/settings');
+        document.getElementById('set-daily').value = data.settings.dailyBonus;
+        document.getElementById('set-ref').value = data.settings.referralBonus;
+        document.getElementById('set-com').value = data.settings.commissionPercent;
+    } catch(e) {}
+}
+
+document.getElementById('save-settings-btn').addEventListener('click', async () => {
+    const body = {
+        dailyBonus: Number(document.getElementById('set-daily').value),
+        referralBonus: Number(document.getElementById('set-ref').value),
+        commissionPercent: Number(document.getElementById('set-com').value)
+    };
+    await apiFetch('/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    const st = document.getElementById('settings-status');
+    st.textContent = 'Настройки сохранены!';
+    st.style.color = '#10b981';
+    setTimeout(() => st.textContent='', 2000);
 });
 
-broadcastBtn.addEventListener('click', async () => {
-    const msg = broadcastMsg.value.trim();
-    if (!msg) {
-        broadcastStatus.textContent = 'Сообщение не может быть пустым';
-        broadcastStatus.style.color = '#ef4444';
-        return;
-    }
-    
-    broadcastBtn.disabled = true;
-    broadcastBtn.textContent = 'Отправка...';
-    
+// --- LOGS ---
+async function loadLogs() {
     try {
-        const res = await fetch('/admin/broadcast', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + adminToken
-            },
-            body: JSON.stringify({ message: msg })
+        const data = await apiFetch('/admin/events');
+        const list = document.getElementById('logs-list');
+        list.innerHTML = '';
+        data.events.forEach(e => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <div class="log-time">${new Date(e.time).toLocaleString()}</div>
+                <div class="log-type ${e.type}">${e.type}</div>
+                <div class="log-msg">${e.message}</div>
+            `;
+            list.appendChild(li);
         });
-        const data = await res.json();
-        
-        if (data.success) {
-            broadcastStatus.textContent = 'Рассылка успешно запущена!';
-            broadcastStatus.style.color = '#10b981';
-            broadcastMsg.value = '';
-            setTimeout(() => { broadcastStatus.textContent = ''; }, 3000);
-        } else {
-            broadcastStatus.textContent = data.message || 'Ошибка рассылки';
-            broadcastStatus.style.color = '#ef4444';
-        }
-    } catch (e) {
-        broadcastStatus.textContent = 'Ошибка сети при рассылке';
-        broadcastStatus.style.color = '#ef4444';
-    } finally {
-        broadcastBtn.disabled = false;
-        broadcastBtn.textContent = 'Отправить рассылку';
-    }
-});
+    } catch(e) {}
+}

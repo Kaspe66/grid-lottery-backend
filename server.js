@@ -55,6 +55,47 @@ let users = {};
 const DB_URL_USERS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/users.json';
 const DB_URL_BALANCES = 'https://grid-lottery-game-default-rtdb.firebaseio.com/balances.json';
 const DB_URL_WITHDRAWALS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/withdrawals.json';
+const DB_URL_SETTINGS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/settings.json';
+const DB_URL_DEPOSITS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/deposits.json';
+
+let gameSettings = {
+    dailyBonus: 50,
+    referralBonus: 500,
+    commissionPercent: 10
+};
+
+fetch(DB_URL_SETTINGS).then(r => r.json()).then(data => {
+    if (data) {
+        gameSettings = { ...gameSettings, ...data };
+    }
+}).catch(err => console.error('Ошибка загрузки настроек:', err));
+
+function saveSettings() {
+    fetch(DB_URL_SETTINGS, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(gameSettings)
+    }).catch(e => {});
+}
+
+let liveEvents = [];
+function addEvent(type, message) {
+    liveEvents.unshift({ type, message, time: Date.now() });
+    if (liveEvents.length > 100) liveEvents.pop();
+}
+
+let allDeposits = {};
+fetch(DB_URL_DEPOSITS).then(r => r.json()).then(data => {
+    if (data) allDeposits = data;
+}).catch(err => console.error('Ошибка загрузки депозитов:', err));
+
+function saveDeposits() {
+    fetch(DB_URL_DEPOSITS, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(allDeposits)
+    }).catch(e => {});
+}
 
 function createUserObject(balance = 50) {
     return {
@@ -66,7 +107,8 @@ function createUserObject(balance = 50) {
         referralsCount: 0,
         hasDeposited: false,
         name: 'User',
-        photo_url: ''
+        photo_url: '',
+        banned: false
     };
 }
 
@@ -241,10 +283,10 @@ function finishRoulette(room, winningIndex) {
     const winnerData = room.gameState[winningIndex];
     
     if (winnerData) {
-        let commissionReal = Math.floor((room.bank_real || 0) * 0.1);
+        let commissionReal = Math.floor((room.bank_real || 0) * (gameSettings.commissionPercent / 100));
         let winAmountReal = (room.bank_real || 0) - commissionReal;
 
-        let commissionBonus = Math.floor((room.bank_bonus || 0) * 0.1);
+        let commissionBonus = Math.floor((room.bank_bonus || 0) * (gameSettings.commissionPercent / 100));
         let winAmountBonus = (room.bank_bonus || 0) - commissionBonus;
 
         let winAmountTotal = winAmountReal + winAmountBonus;
@@ -275,6 +317,11 @@ function finishRoulette(room, winningIndex) {
             users[winnerData.telegram_id].stats.totalWonReal = winAmountReal;
             users[winnerData.telegram_id].stats.totalWonBonus = winAmountBonus;
         }
+        
+        if (winAmountTotal >= room.cellPrice * 2) {
+            addEvent('WIN', `Игрок ${winnerData.username || winnerData.first_name} сорвал куш в ${winAmountTotal} монет в ${room.name}!`);
+        }
+        
         saveUsers();
         io.emit('users_update', users);
 
@@ -403,7 +450,22 @@ io.on('connection', (socket) => {
             if (callback) callback({ success: false, message: 'Сервер на тех. обслуживании. Возвращайтесь позже!' });
             return;
         }
+        
         const { roomId, userData } = data;
+        let tgIdCheck = socket.id;
+        try {
+            if (userData && userData.initData) {
+                const urlParams = new URLSearchParams(userData.initData);
+                const userStr = urlParams.get('user');
+                if (userStr) tgIdCheck = JSON.parse(userStr).id.toString();
+            }
+        } catch (e) {}
+        
+        if (users[tgIdCheck] && users[tgIdCheck].banned) {
+            if (callback) callback({ success: false, message: 'Ваш аккаунт заблокирован!' });
+            return;
+        }
+
         const room = getRoom(roomId);
         
         if (!room) {
@@ -464,7 +526,7 @@ io.on('connection', (socket) => {
                     const referrerId = startParam.split('_')[1];
                     if (users[referrerId] && referrerId !== tgId) {
                         users[tgId].referredBy = referrerId;
-                        users[referrerId].balance_bonus += 50;
+                        users[referrerId].balance_bonus += gameSettings.referralBonus;
                         users[referrerId].referralsCount++;
                     }
                 }
@@ -522,6 +584,10 @@ io.on('connection', (socket) => {
         const tgId = socket.userData.telegram_id;
         let userRecord = users[tgId];
         if (!userRecord) return;
+        if (userRecord.banned) {
+            socket.emit('error', 'Ваш аккаунт заблокирован!');
+            return;
+        }
         
         let price = room.cellPrice;
         let bonus = userRecord.balance_bonus || 0;
@@ -568,17 +634,18 @@ io.on('connection', (socket) => {
         const tgId = socket.userData.telegram_id;
         let userRecord = users[tgId];
         if (!userRecord) return;
+        if (userRecord.banned) return socket.emit('daily_bonus_error', 'Аккаунт заблокирован');
 
         const now = Date.now();
         const lastClaim = userRecord.lastBonusClaim || 0;
         const cooldown = 24 * 60 * 60 * 1000; // 24 hours
 
         if (now - lastClaim >= cooldown) {
-            userRecord.balance_bonus += 50;
+            userRecord.balance_bonus += gameSettings.dailyBonus;
             userRecord.lastBonusClaim = now;
             saveUsers();
             io.emit('users_update', users);
-            socket.emit('daily_bonus_success', 'Вы получили 50 бонусных монет!');
+            socket.emit('daily_bonus_success', `Вы получили ${gameSettings.dailyBonus} бонусных монет!`);
         } else {
             socket.emit('daily_bonus_error', 'Бонус пока недоступен');
         }
@@ -589,6 +656,7 @@ io.on('connection', (socket) => {
         const tgId = socket.userData.telegram_id;
         let userRecord = users[tgId];
         if (!userRecord) return;
+        if (userRecord.banned) return socket.emit('withdrawal_error', 'Аккаунт заблокирован');
         
         const amount = data.amount || 0;
         const wallet = data.wallet || '';
@@ -632,6 +700,7 @@ io.on('connection', (socket) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(withdrawData)
         }).then(() => {
+            addEvent('WITHDRAW', `Игрок ${userRecord.name} запросил вывод ${amount} монет`);
             socket.emit('withdrawal_success', 'Заявка на вывод успешно создана');
         }).catch(err => {
             console.error('Ошибка создания вывода', err);
@@ -739,6 +808,11 @@ async function checkTonTransactions() {
                             saveUsers();
                             io.emit('users_update', users); // Обновляем балансы у всех (включая самого игрока)
                             
+                            addEvent('DEPOSIT', `Игрок ${users[tgId].name} пополнил счет на ${amountInCoins} реальных монет`);
+                            const depId = `dep_${Date.now()}_${tgId}`;
+                            allDeposits[depId] = { tgId, username: users[tgId].name, amount: amountInCoins, valueNano: value, hash, time: Date.now() };
+                            saveDeposits();
+                            
                             try {
                                 bot.telegram.sendMessage(tgId, `🎉 <b>Успешное пополнение!</b>\n\nВаш баланс пополнен на <b>${amountInCoins}</b> реальных монет.\n\nЖелаем приятной игры и крупных выигрышей! 🎲✨`, { parse_mode: 'HTML' });
                             } catch (e) {
@@ -792,6 +866,86 @@ app.get('/admin/stats', requireAdmin, (req, res) => {
         systemBonus: systemStats.commission_bonus || 0,
         maintenance: maintenanceMode
     });
+});
+
+app.get('/admin/users', requireAdmin, (req, res) => {
+    res.json({ success: true, users: users });
+});
+
+app.post('/admin/users/:id', requireAdmin, (req, res) => {
+    const tgId = req.params.id;
+    if (!users[tgId]) return res.status(404).json({ success: false, message: 'User not found' });
+    
+    if (req.body.balance_real !== undefined) users[tgId].balance_real = Number(req.body.balance_real);
+    if (req.body.balance_bonus !== undefined) users[tgId].balance_bonus = Number(req.body.balance_bonus);
+    if (req.body.banned !== undefined) users[tgId].banned = !!req.body.banned;
+    
+    saveUsers();
+    io.emit('users_update', users);
+    res.json({ success: true, user: users[tgId] });
+});
+
+app.get('/admin/withdrawals', requireAdmin, async (req, res) => {
+    try {
+        let data = await fetch(DB_URL_WITHDRAWALS).then(r => r.json());
+        res.json({ success: true, withdrawals: data || {} });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Fetch error' });
+    }
+});
+
+app.post('/admin/withdrawals/:id', requireAdmin, async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    try {
+        let data = await fetch(DB_URL_WITHDRAWALS).then(r => r.json());
+        if (!data || !data[id]) return res.status(404).json({ success: false, message: 'Not found' });
+        
+        let wd = data[id];
+        if (wd.status !== 'pending') return res.status(400).json({ success: false, message: 'Already processed' });
+        
+        wd.status = status;
+        
+        if (status === 'rejected') {
+            const tgId = wd.userId;
+            if (users[tgId]) {
+                users[tgId].balance_real += wd.amount;
+                saveUsers();
+                io.emit('users_update', users);
+                try { bot.telegram.sendMessage(tgId, `❌ Ваша заявка на вывод ${wd.amount} монет отклонена. Монеты возвращены на баланс.`); } catch(e){}
+            }
+        } else if (status === 'approved') {
+            try { bot.telegram.sendMessage(wd.userId, `✅ Ваша заявка на вывод ${wd.amount} монет успешно обработана!`); } catch(e){}
+        }
+        
+        await fetch(`${DB_URL_WITHDRAWALS.replace('.json', '')}/${id}.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(wd)
+        });
+        
+        res.json({ success: true, withdrawal: wd });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error' });
+    }
+});
+
+app.get('/admin/settings', requireAdmin, (req, res) => {
+    res.json({ success: true, settings: gameSettings });
+});
+
+app.post('/admin/settings', requireAdmin, (req, res) => {
+    gameSettings = { ...gameSettings, ...req.body };
+    saveSettings();
+    res.json({ success: true, settings: gameSettings });
+});
+
+app.get('/admin/events', requireAdmin, (req, res) => {
+    res.json({ success: true, events: liveEvents });
+});
+
+app.get('/admin/deposits', requireAdmin, (req, res) => {
+    res.json({ success: true, deposits: Object.values(allDeposits).sort((a,b)=>b.time-a.time) });
 });
 
 app.post('/admin/maintenance', requireAdmin, (req, res) => {

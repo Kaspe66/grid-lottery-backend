@@ -16,65 +16,204 @@
         <div id="login-error" class="error-msg"></div>
     </div>
 
-    <div id="dashboard-container" class="hidden">
-        <header class="glass-panel header">
-            <h1>GridLottery Admin ✨</h1>
+    <div id="app-container" class="hidden">
+        <aside class="sidebar glass-panel">
+            <div class="brand">GridLottery Admin ✨</div>
+            <nav>
+                <button class="nav-btn active" data-tab="dashboard">📊 Дашборд</button>
+                <button class="nav-btn" data-tab="users">👥 Пользователи</button>
+                <button class="nav-btn" data-tab="withdrawals">💸 Выводы</button>
+                <button class="nav-btn" data-tab="deposits">💳 Депозиты</button>
+                <button class="nav-btn" data-tab="settings">⚙️ Настройки</button>
+                <button class="nav-btn" data-tab="logs">📜 Логи событий</button>
+            </nav>
             <button id="logout-btn">Выйти</button>
-        </header>
+        </aside>
 
-        <main class="dashboard-grid">
-            <div class="stat-card glass-panel">
-                <div class="stat-icon">👥</div>
-                <div class="stat-info">
-                    <h3>Онлайн</h3>
-                    <p id="stat-online">0</p>
-                </div>
-            </div>
-            
-            <div class="stat-card glass-panel">
-                <div class="stat-icon">🌍</div>
-                <div class="stat-info">
-                    <h3>Всего игроков</h3>
-                    <p id="stat-total">0</p>
-                </div>
-            </div>
+        <main class="content">
+            <!-- TAB: DASHBOARD -->
+            <section id="tab-dashboard" class="tab-content active">
+                <header class="header">
+                    <h2>Обзор системы</h2>
+                </header>
+                <div class="dashboard-grid">
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <h3>Онлайн</h3>
+                            <p id="stat-online">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon">🌍</div>
+                        <div class="stat-info">
+                            <h3>Всего игроков</h3>
+                            <p id="stat-total">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <h3>Комиссия (Реал)</h3>
+                            <p id="stat-real">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon">💎</div>
+                        <div class="stat-info">
+                            <h3>Комиссия (Бонусы)</h3>
+                            <p id="stat-bonus">0</p>
+                        </div>
+                    </div>
 
-            <div class="stat-card glass-panel">
-                <div class="stat-icon">💰</div>
-                <div class="stat-info">
-                    <h3>Комиссия (Реал)</h3>
-                    <p id="stat-real">0</p>
-                </div>
-            </div>
+                    <div class="action-card glass-panel span-2">
+                        <h2>📣 Массовая рассылка</h2>
+                        <p>Отправьте сообщение всем пользователям бота.</p>
+                        <textarea id="broadcast-msg" placeholder="Поддерживается HTML..."></textarea>
+                        <button id="broadcast-btn">Отправить рассылку</button>
+                        <div id="broadcast-status"></div>
+                    </div>
 
-            <div class="stat-card glass-panel">
-                <div class="stat-icon">💎</div>
-                <div class="stat-info">
-                    <h3>Комиссия (Бонусы)</h3>
-                    <p id="stat-bonus">0</p>
+                    <div class="action-card glass-panel span-2 danger-zone">
+                        <h2>⚠️ Технические работы</h2>
+                        <p>Игроки не смогут заходить в комнаты и делать ставки.</p>
+                        <div class="toggle-container">
+                            <label class="switch">
+                                <input type="checkbox" id="maintenance-toggle">
+                                <span class="slider"></span>
+                            </label>
+                            <span id="maintenance-status-text">Режим выключен</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            <div class="action-card glass-panel span-2">
-                <h2>📣 Массовая рассылка</h2>
-                <p>Отправьте сообщение всем пользователям бота.</p>
-                <textarea id="broadcast-msg" placeholder="Введите текст сообщения... Поддерживается HTML (например, <b>Жирный</b>)"></textarea>
-                <button id="broadcast-btn">Отправить рассылку</button>
-                <div id="broadcast-status"></div>
-            </div>
-
-            <div class="action-card glass-panel span-2 danger-zone">
-                <h2>⚠️ Технические работы</h2>
-                <p>Включение этого режима запретит игрокам заходить в комнаты и делать ставки.</p>
-                <div class="toggle-container">
-                    <label class="switch">
-                        <input type="checkbox" id="maintenance-toggle">
-                        <span class="slider"></span>
-                    </label>
-                    <span id="maintenance-status-text">Режим выключен</span>
+            <!-- TAB: USERS -->
+            <section id="tab-users" class="tab-content">
+                <header class="header">
+                    <h2>Управление пользователями</h2>
+                    <input type="text" id="user-search" placeholder="Поиск по ID или имени..." class="search-input">
+                </header>
+                <div class="glass-panel table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Telegram ID</th>
+                                <th>Имя</th>
+                                <th>Реал</th>
+                                <th>Бонусы</th>
+                                <th>Сыграно игр</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody"></tbody>
+                    </table>
                 </div>
-            </div>
+            </section>
+
+            <!-- TAB: WITHDRAWALS -->
+            <section id="tab-withdrawals" class="tab-content">
+                <header class="header">
+                    <h2>Заявки на вывод</h2>
+                </header>
+                <div class="glass-panel table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Игрок</th>
+                                <th>Сумма</th>
+                                <th>Кошелек (TON)</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="withdrawals-tbody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB: DEPOSITS -->
+            <section id="tab-deposits" class="tab-content">
+                <header class="header">
+                    <h2>История пополнений (TON)</h2>
+                </header>
+                <div class="glass-panel table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Игрок</th>
+                                <th>Сумма (монет)</th>
+                                <th>Значение (nanoTON)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deposits-tbody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB: SETTINGS -->
+            <section id="tab-settings" class="tab-content">
+                <header class="header">
+                    <h2>Динамические настройки</h2>
+                </header>
+                <div class="glass-panel form-container">
+                    <div class="form-group">
+                        <label>Ежедневный бонус (монет)</label>
+                        <input type="number" id="set-daily" />
+                    </div>
+                    <div class="form-group">
+                        <label>Бонус за реферала (монет)</label>
+                        <input type="number" id="set-ref" />
+                    </div>
+                    <div class="form-group">
+                        <label>Комиссия платформы (%)</label>
+                        <input type="number" id="set-com" />
+                    </div>
+                    <button id="save-settings-btn" class="btn-success">Сохранить настройки</button>
+                    <div id="settings-status" class="status-msg"></div>
+                </div>
+            </section>
+
+            <!-- TAB: LOGS -->
+            <section id="tab-logs" class="tab-content">
+                <header class="header">
+                    <h2>Лента событий (Live Feed)</h2>
+                </header>
+                <div class="glass-panel table-container">
+                    <ul class="event-log" id="logs-list">
+                    </ul>
+                </div>
+            </section>
         </main>
+    </div>
+
+    <!-- User Edit Modal -->
+    <div id="user-modal" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <h3 id="modal-title">Редактирование пользователя</h3>
+            <div class="form-group">
+                <label>Реальный баланс</label>
+                <input type="number" id="modal-real" />
+            </div>
+            <div class="form-group">
+                <label>Бонусный баланс</label>
+                <input type="number" id="modal-bonus" />
+            </div>
+            <div class="form-group toggle-group">
+                <label>Заблокирован (Бан)</label>
+                <label class="switch">
+                    <input type="checkbox" id="modal-banned">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="modal-actions">
+                <button id="modal-save" class="btn-success">Сохранить</button>
+                <button id="modal-close" class="btn-cancel">Отмена</button>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
