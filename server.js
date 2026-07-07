@@ -364,16 +364,16 @@ function finishRoulette(room, winningIndex) {
 
 // --- BOTS LOGIC ---
 const BOTS = [
-    { id: 'bot_1', name: 'Alina', color: '0xFFEC4899', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
-    { id: 'bot_2', name: 'Max', color: '0xFF3B82F6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
-    { id: 'bot_3', name: 'CryptoKing', color: '0xFFF59E0B', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
-    { id: 'bot_4', name: 'LuckyGirl', color: '0xFF10B981', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
-    { id: 'bot_5', name: 'Tony', color: '0xFF8B5CF6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
-    { id: 'bot_6', name: 'Elena', color: '0xFFEF4444', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
-    { id: 'bot_7', name: 'Ivan', color: '0xFF6366F1', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
-    { id: 'bot_8', name: 'Sasha', color: '0xFF14B8A6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
-    { id: 'bot_9', name: 'Oleg', color: '0xFFF97316', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
-    { id: 'bot_10', name: 'Natasha', color: '0xFF84CC16', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' }
+    { id: 'bot_1', name: 'Alina', color: '0xFFEC4899', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
+    { id: 'bot_2', name: 'Max', color: '0xFF3B82F6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
+    { id: 'bot_3', name: 'CryptoKing', color: '0xFFF59E0B', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
+    { id: 'bot_4', name: 'LuckyGirl', color: '0xFF10B981', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
+    { id: 'bot_5', name: 'Tony', color: '0xFF8B5CF6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
+    { id: 'bot_6', name: 'Elena', color: '0xFFEF4444', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
+    { id: 'bot_7', name: 'Ivan', color: '0xFF6366F1', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
+    { id: 'bot_8', name: 'Sasha', color: '0xFF14B8A6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
+    { id: 'bot_9', name: 'Oleg', color: '0xFFF97316', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
+    { id: 'bot_10', name: 'Natasha', color: '0xFF84CC16', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 }
 ];
 
 function botLogic() {
@@ -389,6 +389,7 @@ function botLogic() {
                 }
                 bot.currentRoom = null;
                 bot.state = 'DISABLED';
+                bot.emptyRoomSince = 0;
             }
         });
         return;
@@ -396,6 +397,24 @@ function botLogic() {
 
     const now = Date.now();
     BOTS.forEach(bot => {
+        if (!bot.enabled) {
+            if (bot.currentRoom) {
+                const room = getRoom(bot.currentRoom);
+                if (room) {
+                    room.players.delete(bot.id);
+                    room.playersData.delete(bot.id);
+                    io.to(room.id).emit('room_players', Array.from(room.playersData.values()));
+                    broadcastRoomsUpdate();
+                }
+                bot.currentRoom = null;
+                bot.state = 'DISABLED';
+                bot.emptyRoomSince = 0;
+            } else {
+                bot.state = 'DISABLED';
+            }
+            return;
+        }
+
         if (bot.nextActionTime > now) return;
 
         if (!bot.currentRoom) {
@@ -408,11 +427,17 @@ function botLogic() {
             });
 
             if (roomsWithNoBots.length > 0) {
-                const room = roomsWithNoBots[Math.floor(Math.random() * roomsWithNoBots.length)];
+                const getRoomNum = (id) => parseInt(id.split('_').pop(), 10) || 0;
+                let priorityRooms = roomsWithNoBots.filter(r => r.players.size > 0);
+                let targetRooms = priorityRooms.length > 0 ? priorityRooms : roomsWithNoBots;
+                targetRooms.sort((a, b) => getRoomNum(a.id) - getRoomNum(b.id));
+
+                const room = targetRooms[0];
                 bot.currentRoom = room.id;
                 bot.targetCells = Math.floor(Math.random() * 16) + 5; // 5 to 20
                 bot.boughtCells = 0;
                 bot.state = 'IN_ROOM';
+                bot.emptyRoomSince = 0;
                 
                 room.players.add(bot.id);
                 room.playersData.set(bot.id, {
@@ -440,8 +465,26 @@ function botLogic() {
             if (!room) {
                 bot.currentRoom = null;
                 bot.state = 'WAITING';
+                bot.emptyRoomSince = 0;
                 bot.nextActionTime = now + 5000 + Math.random() * 5000;
                 return;
+            }
+
+            if (room.players.size === 1) {
+                if (bot.emptyRoomSince === 0) bot.emptyRoomSince = now;
+                else if (now - bot.emptyRoomSince > 10000 + Math.random() * 5000) {
+                    room.players.delete(bot.id);
+                    room.playersData.delete(bot.id);
+                    io.to(room.id).emit('room_players', Array.from(room.playersData.values()));
+                    broadcastRoomsUpdate();
+                    bot.currentRoom = null;
+                    bot.state = 'WAITING';
+                    bot.emptyRoomSince = 0;
+                    bot.nextActionTime = now + 5000;
+                    return;
+                }
+            } else {
+                bot.emptyRoomSince = 0;
             }
 
             if (room.gamePhase === 'REWARD') {
@@ -458,6 +501,7 @@ function botLogic() {
                 broadcastRoomsUpdate();
                 bot.currentRoom = null;
                 bot.state = 'WAITING';
+                bot.emptyRoomSince = 0;
                 bot.nextActionTime = now + 5000 + Math.random() * 10000;
                 return;
             }
@@ -1019,9 +1063,17 @@ app.get('/admin/bots', requireAdmin, (req, res) => {
             state: b.state,
             boughtCells: b.boughtCells,
             targetCells: b.targetCells,
-            totalWon: b.totalWon
+            totalWon: b.totalWon,
+            enabled: b.enabled
         }))
     });
+});
+
+app.post('/admin/bots/:id/toggle', requireAdmin, (req, res) => {
+    const bot = BOTS.find(b => b.id === req.params.id);
+    if (!bot) return res.status(404).json({ success: false, message: 'Бот не найден' });
+    bot.enabled = !!req.body.enabled;
+    res.json({ success: true, botId: bot.id, enabled: bot.enabled });
 });
 
 app.post('/admin/bots/toggle', requireAdmin, (req, res) => {

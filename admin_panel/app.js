@@ -327,12 +327,30 @@ async function loadBots() {
             tr.innerHTML = `
                 <td>${b.id}</td>
                 <td><b>${b.name}</b></td>
+                <td>
+                    <label class="switch" style="transform: scale(0.7); margin: 0;">
+                        <input type="checkbox" class="bot-indiv-toggle" data-id="${b.id}" ${b.enabled ? 'checked' : ''}>
+                        <span class="slider"></span>
+                    </label>
+                </td>
                 <td>${b.currentRoom ? b.currentRoom : '-'}</td>
                 <td>${statusHtml}</td>
                 <td>${b.boughtCells} / ${b.targetCells}</td>
                 <td style="color:#10b981">+${b.totalWon} монет</td>
             `;
             tbody.appendChild(tr);
+        });
+
+        document.querySelectorAll('.bot-indiv-toggle').forEach(el => {
+            el.addEventListener('change', async (e) => {
+                const botId = e.target.dataset.id;
+                await apiFetch(`/admin/bots/${botId}/toggle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled: e.target.checked })
+                });
+                loadBots();
+            });
         });
     } catch(e) {}
 }
