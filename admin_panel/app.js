@@ -322,6 +322,7 @@ async function loadBots() {
             if (b.state === 'WAITING' || b.state === 'SEARCHING') statusHtml = '<span style="color:#fbbf24">Ожидает/Ищет</span>';
             else if (b.state === 'IN_ROOM' || b.state === 'BETTING') statusHtml = '<span style="color:#10b981">В Игре (Ставит)</span>';
             else if (b.state === 'WATCHING_ROULETTE' || b.state === 'WAITING_FOR_ROULETTE') statusHtml = '<span style="color:#3b82f6">Смотрит рулетку</span>';
+            else if (b.state === 'WAITING_FOR_PLAYER') statusHtml = '<span style="color:#a855f7">Ждет Игрока</span>';
             else statusHtml = `<span style="color:#ef4444">${b.state}</span>`;
             
             tr.innerHTML = `
@@ -336,7 +337,8 @@ async function loadBots() {
                 <td>${b.currentRoom ? b.currentRoom : '-'}</td>
                 <td>${statusHtml}</td>
                 <td>${b.boughtCells} / ${b.targetCells}</td>
-                <td style="color:#10b981">+${b.totalWon} монет</td>
+                <td style="color:#10b981">+${b.totalWonReal || 0}</td>
+                <td style="color:#f59e0b">+${b.totalWonBonus || 0}</td>
             `;
             tbody.appendChild(tr);
         });

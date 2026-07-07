@@ -308,7 +308,10 @@ function finishRoulette(room, winningIndex) {
             users['_SYSTEM_'].commission_balance += winAmountReal;
             users['_SYSTEM_'].commission_bonus += winAmountBonus;
             let bot = BOTS.find(b => b.id === winnerData.telegram_id);
-            if (bot) bot.totalWon = (bot.totalWon || 0) + winAmountTotal;
+            if (bot) {
+                bot.totalWonReal = (bot.totalWonReal || 0) + winAmountReal;
+                bot.totalWonBonus = (bot.totalWonBonus || 0) + winAmountBonus;
+            }
         } else {
             if (users[winnerData.telegram_id]) {
                 users[winnerData.telegram_id].balance_real += winAmountReal;
@@ -364,16 +367,16 @@ function finishRoulette(room, winningIndex) {
 
 // --- BOTS LOGIC ---
 const BOTS = [
-    { id: 'bot_1', name: 'Alina', color: '0xFFEC4899', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
-    { id: 'bot_2', name: 'Max', color: '0xFF3B82F6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
-    { id: 'bot_3', name: 'CryptoKing', color: '0xFFF59E0B', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
-    { id: 'bot_4', name: 'LuckyGirl', color: '0xFF10B981', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
-    { id: 'bot_5', name: 'Tony', color: '0xFF8B5CF6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
-    { id: 'bot_6', name: 'Elena', color: '0xFFEF4444', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
-    { id: 'bot_7', name: 'Ivan', color: '0xFF6366F1', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
-    { id: 'bot_8', name: 'Sasha', color: '0xFF14B8A6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
-    { id: 'bot_9', name: 'Oleg', color: '0xFFF97316', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 },
-    { id: 'bot_10', name: 'Natasha', color: '0xFF84CC16', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0 }
+    { id: 'bot_1', name: 'Alina', color: '0xFFEC4899', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
+    { id: 'bot_2', name: 'Max', color: '0xFF3B82F6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
+    { id: 'bot_3', name: 'CryptoKing', color: '0xFFF59E0B', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
+    { id: 'bot_4', name: 'LuckyGirl', color: '0xFF10B981', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
+    { id: 'bot_5', name: 'Tony', color: '0xFF8B5CF6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
+    { id: 'bot_6', name: 'Elena', color: '0xFFEF4444', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
+    { id: 'bot_7', name: 'Ivan', color: '0xFF6366F1', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
+    { id: 'bot_8', name: 'Sasha', color: '0xFF14B8A6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
+    { id: 'bot_9', name: 'Oleg', color: '0xFFF97316', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
+    { id: 'bot_10', name: 'Natasha', color: '0xFF84CC16', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false }
 ];
 
 function botLogic() {
@@ -438,6 +441,8 @@ function botLogic() {
                 bot.boughtCells = 0;
                 bot.state = 'IN_ROOM';
                 bot.emptyRoomSince = 0;
+                bot.gamesPlayedInRoom = 0;
+                bot.hasSeenRealPlayer = false;
                 
                 room.players.add(bot.id);
                 room.playersData.set(bot.id, {
@@ -470,21 +475,31 @@ function botLogic() {
                 return;
             }
 
-            if (room.players.size === 1) {
-                if (bot.emptyRoomSince === 0) bot.emptyRoomSince = now;
-                else if (now - bot.emptyRoomSince > 10000 + Math.random() * 5000) {
-                    room.players.delete(bot.id);
-                    room.playersData.delete(bot.id);
-                    io.to(room.id).emit('room_players', Array.from(room.playersData.values()));
-                    broadcastRoomsUpdate();
-                    bot.currentRoom = null;
-                    bot.state = 'WAITING';
-                    bot.emptyRoomSince = 0;
-                    bot.nextActionTime = now + 5000;
-                    return;
-                }
-            } else {
+            let hasRealPlayer = false;
+            room.players.forEach(pid => {
+                if (!String(pid).startsWith('bot_')) hasRealPlayer = true;
+            });
+
+            if (hasRealPlayer) {
+                bot.hasSeenRealPlayer = true;
                 bot.emptyRoomSince = 0;
+            } else {
+                if (bot.emptyRoomSince === 0) bot.emptyRoomSince = now;
+                else {
+                    let timeout = bot.hasSeenRealPlayer ? 5000 : 15000;
+                    if (now - bot.emptyRoomSince > timeout) {
+                        room.players.delete(bot.id);
+                        room.playersData.delete(bot.id);
+                        io.to(room.id).emit('room_players', Array.from(room.playersData.values()));
+                        broadcastRoomsUpdate();
+                        bot.currentRoom = null;
+                        bot.state = 'WAITING';
+                        bot.emptyRoomSince = 0;
+                        bot.gamesPlayedInRoom = 0;
+                        bot.nextActionTime = now + 5000;
+                        return;
+                    }
+                }
             }
 
             if (room.gamePhase === 'REWARD') {
@@ -495,20 +510,36 @@ function botLogic() {
 
             // Round reset check (bank is 0, meaning reset just happened)
             if (bot.boughtCells > 0 && room.bank === 0 && (room.gamePhase === 'WAITING' || room.gamePhase === 'BETTING')) {
-                room.players.delete(bot.id);
-                room.playersData.delete(bot.id);
-                io.to(room.id).emit('room_players', Array.from(room.playersData.values()));
-                broadcastRoomsUpdate();
-                bot.currentRoom = null;
-                bot.state = 'WAITING';
-                bot.emptyRoomSince = 0;
-                bot.nextActionTime = now + 5000 + Math.random() * 10000;
+                bot.gamesPlayedInRoom++;
+                bot.boughtCells = 0;
+                bot.targetCells = Math.floor(Math.random() * 16) + 5;
+                
+                if (bot.gamesPlayedInRoom >= 5) {
+                    room.players.delete(bot.id);
+                    room.playersData.delete(bot.id);
+                    io.to(room.id).emit('room_players', Array.from(room.playersData.values()));
+                    broadcastRoomsUpdate();
+                    bot.currentRoom = null;
+                    bot.state = 'WAITING';
+                    bot.emptyRoomSince = 0;
+                    bot.gamesPlayedInRoom = 0;
+                    bot.nextActionTime = now + 5000 + Math.random() * 5000;
+                    return;
+                }
+                
+                bot.nextActionTime = now + 2000;
                 return;
             }
 
             if (room.gamePhase === 'BETTING') {
                 bot.state = 'BETTING';
-                if (bot.boughtCells < bot.targetCells) {
+                
+                let realPlayerBought = false;
+                room.gameState.forEach(cell => {
+                    if (cell !== null && !String(cell.telegram_id).startsWith('bot_')) realPlayerBought = true;
+                });
+                
+                if (bot.boughtCells < bot.targetCells && realPlayerBought) {
                     let emptyIndices = [];
                     room.gameState.forEach((cell, idx) => { if (cell === null) emptyIndices.push(idx); });
                     
@@ -535,8 +566,8 @@ function botLogic() {
                         bot.nextActionTime = now + 5000; // Room is full
                     }
                 } else {
-                    bot.state = 'WAITING_FOR_ROULETTE';
-                    bot.nextActionTime = now + 5000;
+                    bot.state = realPlayerBought ? 'WAITING_FOR_ROULETTE' : 'WAITING_FOR_PLAYER';
+                    bot.nextActionTime = now + 2000;
                 }
             } else {
                 bot.state = 'WAITING';
@@ -1063,7 +1094,8 @@ app.get('/admin/bots', requireAdmin, (req, res) => {
             state: b.state,
             boughtCells: b.boughtCells,
             targetCells: b.targetCells,
-            totalWon: b.totalWon,
+            totalWonReal: b.totalWonReal,
+            totalWonBonus: b.totalWonBonus,
             enabled: b.enabled
         }))
     });
