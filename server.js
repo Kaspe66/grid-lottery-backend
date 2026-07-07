@@ -318,8 +318,8 @@ function finishRoulette(room, winningIndex) {
             let botRealProfit = realPlayerBetReal - commissionReal;
             let botBonusProfit = realPlayerBetBonus - commissionBonus;
             
-            users['_SYSTEM_'].commission_balance += botRealProfit;
-            users['_SYSTEM_'].commission_bonus += botBonusProfit;
+            users['_SYSTEM_'].bot_profit_real = (users['_SYSTEM_'].bot_profit_real || 0) + botRealProfit;
+            users['_SYSTEM_'].bot_profit_bonus = (users['_SYSTEM_'].bot_profit_bonus || 0) + botBonusProfit;
             
             let bot = BOTS.find(b => b.id === winnerData.telegram_id);
             if (bot) {
@@ -1134,8 +1134,8 @@ app.get('/admin/bots', requireAdmin, (req, res) => {
     res.json({
         success: true,
         botsEnabled: !!gameSettings.botsEnabled,
-        systemReal: systemStats.commission_balance || 0,
-        systemBonus: systemStats.commission_bonus || 0,
+        systemReal: (systemStats.commission_balance || 0) + (systemStats.bot_profit_real || 0),
+        systemBonus: (systemStats.commission_bonus || 0) + (systemStats.bot_profit_bonus || 0),
         bots: BOTS.map(b => ({
             id: b.id,
             name: b.name,
@@ -1172,6 +1172,8 @@ app.get('/admin/stats', requireAdmin, (req, res) => {
         totalUsers: totalUsers,
         systemReal: systemStats.commission_balance || 0,
         systemBonus: systemStats.commission_bonus || 0,
+        botProfitReal: systemStats.bot_profit_real || 0,
+        botProfitBonus: systemStats.bot_profit_bonus || 0,
         maintenance: maintenanceMode
     });
 });

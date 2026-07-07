@@ -90,6 +90,11 @@ async function loadDashboard() {
         document.getElementById('stat-real').innerHTML = `${data.systemReal} <span style="font-size:1rem;color:rgba(255,255,255,0.5)">(${(data.systemReal/1000).toFixed(2)} GRAM)</span>`;
         document.getElementById('stat-bonus').textContent = data.systemBonus;
         
+        const statBotReal = document.getElementById('stat-bot-real');
+        const statBotBonus = document.getElementById('stat-bot-bonus');
+        if (statBotReal) statBotReal.innerHTML = `${data.botProfitReal || 0} <span style="font-size:1rem;color:rgba(255,255,255,0.5)">(${((data.botProfitReal || 0)/1000).toFixed(2)} GRAM)</span>`;
+        if (statBotBonus) statBotBonus.textContent = data.botProfitBonus || 0;
+        
         const mToggle = document.getElementById('maintenance-toggle');
         const mText = document.getElementById('maintenance-status-text');
         if (mToggle.checked !== data.maintenance) mToggle.checked = data.maintenance;
