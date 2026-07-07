@@ -366,18 +366,46 @@ function finishRoulette(room, winningIndex) {
 }
 
 // --- BOTS LOGIC ---
-const BOTS = [
-    { id: 'bot_1', name: 'Alina', color: '0xFFEC4899', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
-    { id: 'bot_2', name: 'Max', color: '0xFF3B82F6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
-    { id: 'bot_3', name: 'CryptoKing', color: '0xFFF59E0B', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
-    { id: 'bot_4', name: 'LuckyGirl', color: '0xFF10B981', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
-    { id: 'bot_5', name: 'Tony', color: '0xFF8B5CF6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
-    { id: 'bot_6', name: 'Elena', color: '0xFFEF4444', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
-    { id: 'bot_7', name: 'Ivan', color: '0xFF6366F1', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
-    { id: 'bot_8', name: 'Sasha', color: '0xFF14B8A6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
-    { id: 'bot_9', name: 'Oleg', color: '0xFFF97316', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false },
-    { id: 'bot_10', name: 'Natasha', color: '0xFF84CC16', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWonReal: 0, totalWonBonus: 0, state: 'WAITING', enabled: true, emptyRoomSince: 0, gamesPlayedInRoom: 0, hasSeenRealPlayer: false }
-];
+let BOT_NAMES = [];
+try {
+    BOT_NAMES = require('./botNames.json');
+} catch (e) {
+    BOT_NAMES = ['Alina', 'Max', 'CryptoKing', 'LuckyGirl', 'Tony', 'Elena', 'Ivan', 'Sasha', 'Oleg', 'Natasha'];
+}
+
+function getRandomBotName() {
+    return BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+}
+
+function getRandomBotColor() {
+    const colors = ['0xFFEC4899', '0xFF3B82F6', '0xFFF59E0B', '0xFF10B981', '0xFF8B5CF6', '0xFFEF4444', '0xFF6366F1', '0xFF14B8A6', '0xFFF97316', '0xFF84CC16'];
+    return colors[Math.floor(Math.random() * colors.length)];
+}
+
+function reassignBotIdentity(bot) {
+    bot.name = getRandomBotName();
+    bot.color = getRandomBotColor();
+}
+
+const BOTS = [];
+for (let i = 1; i <= 20; i++) {
+    BOTS.push({
+        id: 'bot_' + i,
+        name: getRandomBotName(),
+        color: getRandomBotColor(),
+        currentRoom: null,
+        targetCells: 0,
+        boughtCells: 0,
+        nextActionTime: 0,
+        totalWonReal: 0,
+        totalWonBonus: 0,
+        state: 'WAITING',
+        enabled: true,
+        emptyRoomSince: 0,
+        gamesPlayedInRoom: 0,
+        hasSeenRealPlayer: false
+    });
+}
 
 function botLogic() {
     if (!gameSettings.botsEnabled) {
@@ -393,6 +421,7 @@ function botLogic() {
                 bot.currentRoom = null;
                 bot.state = 'DISABLED';
                 bot.emptyRoomSince = 0;
+                reassignBotIdentity(bot);
             }
         });
         return;
@@ -412,6 +441,7 @@ function botLogic() {
                 bot.currentRoom = null;
                 bot.state = 'DISABLED';
                 bot.emptyRoomSince = 0;
+                reassignBotIdentity(bot);
             } else {
                 bot.state = 'DISABLED';
             }
@@ -496,6 +526,7 @@ function botLogic() {
                         bot.state = 'WAITING';
                         bot.emptyRoomSince = 0;
                         bot.gamesPlayedInRoom = 0;
+                        reassignBotIdentity(bot);
                         bot.nextActionTime = now + 5000;
                         return;
                     }
@@ -523,6 +554,7 @@ function botLogic() {
                     bot.state = 'WAITING';
                     bot.emptyRoomSince = 0;
                     bot.gamesPlayedInRoom = 0;
+                    reassignBotIdentity(bot);
                     bot.nextActionTime = now + 5000 + Math.random() * 5000;
                     return;
                 }
