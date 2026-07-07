@@ -61,7 +61,8 @@ const DB_URL_DEPOSITS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/d
 let gameSettings = {
     dailyBonus: 50,
     referralBonus: 500,
-    commissionPercent: 10
+    commissionPercent: 10,
+    botsEnabled: false
 };
 
 fetch(DB_URL_SETTINGS).then(r => r.json()).then(data => {
@@ -302,21 +303,29 @@ function finishRoulette(room, winningIndex) {
             bank: winAmountTotal,
             cell: winningIndex + 1
         };
-        if (users[winnerData.telegram_id]) {
-            users[winnerData.telegram_id].balance_real += winAmountReal;
-            users[winnerData.telegram_id].balance_bonus += winAmountBonus;
-            users[winnerData.telegram_id].stats.wins++;
-            users[winnerData.telegram_id].stats.totalWon += winAmountTotal;
-            users[winnerData.telegram_id].stats.totalWonReal = (users[winnerData.telegram_id].stats.totalWonReal || 0) + winAmountReal;
-            users[winnerData.telegram_id].stats.totalWonBonus = (users[winnerData.telegram_id].stats.totalWonBonus || 0) + winAmountBonus;
+        
+        if (winnerData.telegram_id && String(winnerData.telegram_id).startsWith('bot_')) {
+            users['_SYSTEM_'].commission_balance += winAmountReal;
+            users['_SYSTEM_'].commission_bonus += winAmountBonus;
+            let bot = BOTS.find(b => b.id === winnerData.telegram_id);
+            if (bot) bot.totalWon = (bot.totalWon || 0) + winAmountTotal;
         } else {
-            users[winnerData.telegram_id] = createUserObject(50);
-            users[winnerData.telegram_id].balance_real += winAmountReal;
-            users[winnerData.telegram_id].balance_bonus += winAmountBonus;
-            users[winnerData.telegram_id].stats.wins++;
-            users[winnerData.telegram_id].stats.totalWon += winAmountTotal;
-            users[winnerData.telegram_id].stats.totalWonReal = winAmountReal;
-            users[winnerData.telegram_id].stats.totalWonBonus = winAmountBonus;
+            if (users[winnerData.telegram_id]) {
+                users[winnerData.telegram_id].balance_real += winAmountReal;
+                users[winnerData.telegram_id].balance_bonus += winAmountBonus;
+                users[winnerData.telegram_id].stats.wins++;
+                users[winnerData.telegram_id].stats.totalWon += winAmountTotal;
+                users[winnerData.telegram_id].stats.totalWonReal = (users[winnerData.telegram_id].stats.totalWonReal || 0) + winAmountReal;
+                users[winnerData.telegram_id].stats.totalWonBonus = (users[winnerData.telegram_id].stats.totalWonBonus || 0) + winAmountBonus;
+            } else {
+                users[winnerData.telegram_id] = createUserObject(50);
+                users[winnerData.telegram_id].balance_real += winAmountReal;
+                users[winnerData.telegram_id].balance_bonus += winAmountBonus;
+                users[winnerData.telegram_id].stats.wins++;
+                users[winnerData.telegram_id].stats.totalWon += winAmountTotal;
+                users[winnerData.telegram_id].stats.totalWonReal = winAmountReal;
+                users[winnerData.telegram_id].stats.totalWonBonus = winAmountBonus;
+            }
         }
         
         if (winAmountTotal >= room.cellPrice * 2) {
@@ -352,6 +361,148 @@ function finishRoulette(room, winningIndex) {
         resetRoom(room);
     }, REWARD_TIME * 1000);
 }
+
+// --- BOTS LOGIC ---
+const BOTS = [
+    { id: 'bot_1', name: 'Alina', color: '0xFFEC4899', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
+    { id: 'bot_2', name: 'Max', color: '0xFF3B82F6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
+    { id: 'bot_3', name: 'CryptoKing', color: '0xFFF59E0B', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
+    { id: 'bot_4', name: 'LuckyGirl', color: '0xFF10B981', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
+    { id: 'bot_5', name: 'Tony', color: '0xFF8B5CF6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
+    { id: 'bot_6', name: 'Elena', color: '0xFFEF4444', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
+    { id: 'bot_7', name: 'Ivan', color: '0xFF6366F1', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
+    { id: 'bot_8', name: 'Sasha', color: '0xFF14B8A6', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
+    { id: 'bot_9', name: 'Oleg', color: '0xFFF97316', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' },
+    { id: 'bot_10', name: 'Natasha', color: '0xFF84CC16', currentRoom: null, targetCells: 0, boughtCells: 0, nextActionTime: 0, totalWon: 0, state: 'WAITING' }
+];
+
+function botLogic() {
+    if (!gameSettings.botsEnabled) {
+        BOTS.forEach(bot => {
+            if (bot.currentRoom) {
+                const room = getRoom(bot.currentRoom);
+                if (room) {
+                    room.players.delete(bot.id);
+                    room.playersData.delete(bot.id);
+                    io.to(room.id).emit('room_players', Array.from(room.playersData.values()));
+                    broadcastRoomsUpdate();
+                }
+                bot.currentRoom = null;
+                bot.state = 'DISABLED';
+            }
+        });
+        return;
+    }
+
+    const now = Date.now();
+    BOTS.forEach(bot => {
+        if (bot.nextActionTime > now) return;
+
+        if (!bot.currentRoom) {
+            bot.state = 'SEARCHING';
+            const availableRooms = rooms.filter(r => r.gamePhase === 'WAITING' || r.gamePhase === 'BETTING');
+            const roomsWithNoBots = availableRooms.filter(r => {
+                let hasBot = false;
+                r.players.forEach(pid => { if (String(pid).startsWith('bot_')) hasBot = true; });
+                return !hasBot && r.players.size < r.maxPlayers;
+            });
+
+            if (roomsWithNoBots.length > 0) {
+                const room = roomsWithNoBots[Math.floor(Math.random() * roomsWithNoBots.length)];
+                bot.currentRoom = room.id;
+                bot.targetCells = Math.floor(Math.random() * 16) + 5; // 5 to 20
+                bot.boughtCells = 0;
+                bot.state = 'IN_ROOM';
+                
+                room.players.add(bot.id);
+                room.playersData.set(bot.id, {
+                    telegram_id: bot.id,
+                    username: bot.name,
+                    first_name: bot.name,
+                    photo_url: '',
+                    color: bot.color
+                });
+                
+                if (room.gamePhase === 'WAITING' && room.players.size >= 2) {
+                    room.gamePhase = 'BETTING';
+                    room.timeLeft = BETTING_TIME;
+                    io.to(room.id).emit('game_update', { phase: room.gamePhase, timeLeft: room.timeLeft, bank: room.bank, cellPrice: room.cellPrice });
+                }
+                
+                io.to(room.id).emit('room_players', Array.from(room.playersData.values()));
+                broadcastRoomsUpdate();
+                bot.nextActionTime = now + 2000 + Math.random() * 3000;
+            } else {
+                bot.nextActionTime = now + 5000;
+            }
+        } else {
+            const room = getRoom(bot.currentRoom);
+            if (!room) {
+                bot.currentRoom = null;
+                bot.state = 'WAITING';
+                bot.nextActionTime = now + 5000 + Math.random() * 5000;
+                return;
+            }
+
+            if (room.gamePhase === 'REWARD') {
+                bot.state = 'WATCHING_ROULETTE';
+                bot.nextActionTime = now + 2000;
+                return;
+            }
+
+            // Round reset check (bank is 0, meaning reset just happened)
+            if (bot.boughtCells > 0 && room.bank === 0 && (room.gamePhase === 'WAITING' || room.gamePhase === 'BETTING')) {
+                room.players.delete(bot.id);
+                room.playersData.delete(bot.id);
+                io.to(room.id).emit('room_players', Array.from(room.playersData.values()));
+                broadcastRoomsUpdate();
+                bot.currentRoom = null;
+                bot.state = 'WAITING';
+                bot.nextActionTime = now + 5000 + Math.random() * 10000;
+                return;
+            }
+
+            if (room.gamePhase === 'BETTING') {
+                bot.state = 'BETTING';
+                if (bot.boughtCells < bot.targetCells) {
+                    let emptyIndices = [];
+                    room.gameState.forEach((cell, idx) => { if (cell === null) emptyIndices.push(idx); });
+                    
+                    if (emptyIndices.length > 0) {
+                        const idx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+                        
+                        room.bank += room.cellPrice;
+                        if (room.currency === 'REAL') room.bank_real = (room.bank_real || 0) + room.cellPrice;
+                        if (room.currency === 'BONUS') room.bank_bonus = (room.bank_bonus || 0) + room.cellPrice;
+                        
+                        room.gameState[idx] = {
+                            username: bot.name,
+                            telegram_id: bot.id,
+                            color: bot.color,
+                            first_name: bot.name,
+                            photo_url: ''
+                        };
+                        
+                        io.to(room.id).emit('update_state', room.gameState);
+                        io.to(room.id).emit('game_update', { phase: room.gamePhase, timeLeft: room.timeLeft, bank: room.bank, cellPrice: room.cellPrice }); 
+                        bot.boughtCells++;
+                        bot.nextActionTime = now + 1000 + Math.random() * 2000;
+                    } else {
+                        bot.nextActionTime = now + 5000; // Room is full
+                    }
+                } else {
+                    bot.state = 'WAITING_FOR_ROULETTE';
+                    bot.nextActionTime = now + 5000;
+                }
+            } else {
+                bot.state = 'WAITING';
+                bot.nextActionTime = now + 2000;
+            }
+        }
+    });
+}
+setInterval(botLogic, 1000);
+// --- END BOTS LOGIC ---
 
 // Глобальный цикл обновления комнат
 setInterval(() => {
@@ -856,6 +1007,28 @@ const requireAdmin = (req, res, next) => {
         res.status(401).json({ success: false, message: 'Необходима авторизация' });
     }
 };
+
+app.get('/admin/bots', requireAdmin, (req, res) => {
+    res.json({
+        success: true,
+        botsEnabled: !!gameSettings.botsEnabled,
+        bots: BOTS.map(b => ({
+            id: b.id,
+            name: b.name,
+            currentRoom: b.currentRoom,
+            state: b.state,
+            boughtCells: b.boughtCells,
+            targetCells: b.targetCells,
+            totalWon: b.totalWon
+        }))
+    });
+});
+
+app.post('/admin/bots/toggle', requireAdmin, (req, res) => {
+    gameSettings.botsEnabled = !!req.body.enabled;
+    saveSettings();
+    res.json({ success: true, botsEnabled: gameSettings.botsEnabled });
+});
 
 app.get('/admin/stats', requireAdmin, (req, res) => {
     let totalUsers = Object.keys(users).filter(k => k !== '_SYSTEM_').length;

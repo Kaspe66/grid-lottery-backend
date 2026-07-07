@@ -25,6 +25,7 @@
                 <button class="nav-btn" data-tab="withdrawals">💸 Выводы</button>
                 <button class="nav-btn" data-tab="deposits">💳 Депозиты</button>
                 <button class="nav-btn" data-tab="settings">⚙️ Настройки</button>
+                <button class="nav-btn" data-tab="bots">🤖 Боты</button>
                 <button class="nav-btn" data-tab="logs">📜 Логи событий</button>
             </nav>
             <button id="logout-btn">Выйти</button>
@@ -174,6 +175,37 @@
                     </div>
                     <button id="save-settings-btn" class="btn-success">Сохранить настройки</button>
                     <div id="settings-status" class="status-msg"></div>
+                </div>
+            </section>
+
+            <!-- TAB: BOTS -->
+            <section id="tab-bots" class="tab-content">
+                <header class="header">
+                    <h2>Управление Ботами</h2>
+                </header>
+                <div class="glass-panel">
+                    <div class="toggle-container" style="margin-bottom: 20px;">
+                        <label class="switch">
+                            <input type="checkbox" id="bots-toggle">
+                            <span class="slider"></span>
+                        </label>
+                        <span id="bots-status-text">Боты выключены</span>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Имя</th>
+                                    <th>Текущая Комната</th>
+                                    <th>Статус</th>
+                                    <th>Куплено Ячеек</th>
+                                    <th>Заработано в Казну</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bots-tbody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 

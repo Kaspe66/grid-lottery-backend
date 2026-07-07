@@ -71,6 +71,7 @@ function loadActiveTab() {
     if (activeTab === 'settings') loadSettings();
     if (activeTab === 'logs') loadLogs();
     if (activeTab === 'deposits') loadDeposits();
+    if (activeTab === 'bots') loadBots();
 }
 
 async function apiFetch(url, options = {}) {
@@ -300,3 +301,47 @@ async function loadLogs() {
         });
     } catch(e) {}
 }
+
+// --- BOTS ---
+async function loadBots() {
+    try {
+        const data = await apiFetch('/admin/bots');
+        
+        const bToggle = document.getElementById('bots-toggle');
+        const bText = document.getElementById('bots-status-text');
+        if (bToggle.checked !== data.botsEnabled) bToggle.checked = data.botsEnabled;
+        bText.textContent = data.botsEnabled ? 'Боты включены' : 'Боты выключены';
+        bText.style.color = data.botsEnabled ? '#10b981' : '#fff';
+        
+        const tbody = document.getElementById('bots-tbody');
+        tbody.innerHTML = '';
+        data.bots.forEach(b => {
+            const tr = document.createElement('tr');
+            
+            let statusHtml = '';
+            if (b.state === 'WAITING' || b.state === 'SEARCHING') statusHtml = '<span style="color:#fbbf24">Ожидает/Ищет</span>';
+            else if (b.state === 'IN_ROOM' || b.state === 'BETTING') statusHtml = '<span style="color:#10b981">В Игре (Ставит)</span>';
+            else if (b.state === 'WATCHING_ROULETTE' || b.state === 'WAITING_FOR_ROULETTE') statusHtml = '<span style="color:#3b82f6">Смотрит рулетку</span>';
+            else statusHtml = `<span style="color:#ef4444">${b.state}</span>`;
+            
+            tr.innerHTML = `
+                <td>${b.id}</td>
+                <td><b>${b.name}</b></td>
+                <td>${b.currentRoom ? b.currentRoom : '-'}</td>
+                <td>${statusHtml}</td>
+                <td>${b.boughtCells} / ${b.targetCells}</td>
+                <td style="color:#10b981">+${b.totalWon} монет</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch(e) {}
+}
+
+document.getElementById('bots-toggle').addEventListener('change', async (e) => {
+    await apiFetch('/admin/bots/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: e.target.checked })
+    });
+    loadBots();
+});
