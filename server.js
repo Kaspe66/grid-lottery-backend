@@ -285,10 +285,20 @@ function finishRoulette(room, winningIndex) {
     const winnerData = room.gameState[winningIndex];
     
     if (winnerData) {
-        let commissionReal = Math.floor((room.bank_real || 0) * (gameSettings.commissionPercent / 100));
+        let realPlayerBetReal = 0;
+        let realPlayerBetBonus = 0;
+        
+        room.gameState.forEach(cell => {
+            if (cell !== null && !String(cell.telegram_id).startsWith('bot_')) {
+                if (room.currency === 'REAL') realPlayerBetReal += room.cellPrice;
+                if (room.currency === 'BONUS') realPlayerBetBonus += room.cellPrice;
+            }
+        });
+
+        let commissionReal = Math.floor(realPlayerBetReal * (gameSettings.commissionPercent / 100));
         let winAmountReal = (room.bank_real || 0) - commissionReal;
 
-        let commissionBonus = Math.floor((room.bank_bonus || 0) * (gameSettings.commissionPercent / 100));
+        let commissionBonus = Math.floor(realPlayerBetBonus * (gameSettings.commissionPercent / 100));
         let winAmountBonus = (room.bank_bonus || 0) - commissionBonus;
 
         let winAmountTotal = winAmountReal + winAmountBonus;
@@ -305,12 +315,16 @@ function finishRoulette(room, winningIndex) {
         };
         
         if (winnerData.telegram_id && String(winnerData.telegram_id).startsWith('bot_')) {
-            users['_SYSTEM_'].commission_balance += winAmountReal;
-            users['_SYSTEM_'].commission_bonus += winAmountBonus;
+            let botRealProfit = realPlayerBetReal - commissionReal;
+            let botBonusProfit = realPlayerBetBonus - commissionBonus;
+            
+            users['_SYSTEM_'].commission_balance += botRealProfit;
+            users['_SYSTEM_'].commission_bonus += botBonusProfit;
+            
             let bot = BOTS.find(b => b.id === winnerData.telegram_id);
             if (bot) {
-                bot.totalWonReal = (bot.totalWonReal || 0) + winAmountReal;
-                bot.totalWonBonus = (bot.totalWonBonus || 0) + winAmountBonus;
+                bot.totalWonReal = (bot.totalWonReal || 0) + botRealProfit;
+                bot.totalWonBonus = (bot.totalWonBonus || 0) + botBonusProfit;
             }
         } else {
             if (users[winnerData.telegram_id]) {
