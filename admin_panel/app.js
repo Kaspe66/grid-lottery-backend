@@ -313,6 +313,11 @@ async function loadBots() {
         bText.textContent = data.botsEnabled ? 'Боты включены' : 'Боты выключены';
         bText.style.color = data.botsEnabled ? '#10b981' : '#fff';
         
+        const tReal = document.getElementById('bots-treasury-real');
+        const tBonus = document.getElementById('bots-treasury-bonus');
+        if (tReal) tReal.textContent = `Real: ${data.systemReal}`;
+        if (tBonus) tBonus.textContent = `Bonus: ${data.systemBonus}`;
+        
         const tbody = document.getElementById('bots-tbody');
         tbody.innerHTML = '';
         data.bots.forEach(b => {

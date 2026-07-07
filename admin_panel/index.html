@@ -184,12 +184,21 @@
                     <h2>Управление Ботами</h2>
                 </header>
                 <div class="glass-panel">
-                    <div class="toggle-container" style="margin-bottom: 20px;">
-                        <label class="switch">
-                            <input type="checkbox" id="bots-toggle">
-                            <span class="slider"></span>
-                        </label>
-                        <span id="bots-status-text">Боты выключены</span>
+                    <div class="toggle-container" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <label class="switch">
+                                <input type="checkbox" id="bots-toggle">
+                                <span class="slider"></span>
+                            </label>
+                            <span id="bots-status-text">Боты выключены</span>
+                        </div>
+                        <div style="text-align: right; background: rgba(0,0,0,0.2); padding: 8px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-size: 0.8rem; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Общая Казна Казино</div>
+                            <div>
+                                <span style="color: #10b981; font-weight: bold; font-size: 1.1rem; margin-right: 15px;" id="bots-treasury-real">Real: 0</span>
+                                <span style="color: #f59e0b; font-weight: bold; font-size: 1.1rem;" id="bots-treasury-bonus">Bonus: 0</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="table-container">
                         <table class="data-table">

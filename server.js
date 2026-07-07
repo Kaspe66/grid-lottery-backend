@@ -1130,9 +1130,12 @@ const requireAdmin = (req, res, next) => {
 };
 
 app.get('/admin/bots', requireAdmin, (req, res) => {
+    let systemStats = users['_SYSTEM_'] || { commission_balance: 0, commission_bonus: 0 };
     res.json({
         success: true,
         botsEnabled: !!gameSettings.botsEnabled,
+        systemReal: systemStats.commission_balance || 0,
+        systemBonus: systemStats.commission_bonus || 0,
         bots: BOTS.map(b => ({
             id: b.id,
             name: b.name,
