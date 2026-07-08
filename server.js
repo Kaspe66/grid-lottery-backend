@@ -480,19 +480,18 @@ function botLogic() {
         if (!bot.currentRoom) {
             bot.state = 'SEARCHING';
             const availableRooms = rooms.filter(r => r.currency === 'BONUS' && (r.gamePhase === 'WAITING' || r.gamePhase === 'BETTING'));
+            const getRoomNum = (id) => parseInt(id.split('_').pop(), 10) || 0;
             const roomsWithNoBots = availableRooms.filter(r => {
                 let botCount = 0;
                 r.players.forEach(pid => { if (String(pid).startsWith('bot_')) botCount++; });
-                return botCount < 4 && r.players.size < r.maxPlayers;
+                return botCount < 4 && r.players.size < r.maxPlayers && getRoomNum(r.id) <= 3;
             });
 
             if (roomsWithNoBots.length > 0) {
-                const getRoomNum = (id) => parseInt(id.split('_').pop(), 10) || 0;
                 let priorityRooms = roomsWithNoBots.filter(r => r.players.size > 0);
                 let targetRooms = priorityRooms.length > 0 ? priorityRooms : roomsWithNoBots;
-                targetRooms.sort((a, b) => getRoomNum(a.id) - getRoomNum(b.id));
 
-                const room = targetRooms[0];
+                const room = targetRooms[Math.floor(Math.random() * targetRooms.length)];
                 bot.currentRoom = room.id;
                 bot.targetCells = Math.floor(Math.random() * 16) + 5; // 5 to 20
                 bot.boughtCells = 0;
