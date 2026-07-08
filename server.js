@@ -34,7 +34,7 @@ app.get('/avatar', async (req, res) => {
 bot.start((ctx) => {
     const userId = ctx.from.id;
     ctx.setChatMenuButton({ type: 'web_app', text: 'Играть 🎲', web_app: { url: webAppUrl } }).catch(e => console.log(e));
-    ctx.reply('Добро пожаловать в Grid Lottery! 🎲\n\nПриглашай друзей и получай 500 монет за каждого!\nТвоя ссылка:\nhttps://t.me/GridLotteryBot/app?startapp=ref_' + userId + '\n\nНажми кнопку ниже, чтобы зайти в комнату:', {
+    ctx.reply('Добро пожаловать в Grid Lottery! 🎲\n\nУникальная игра, где ты можешь испытать удачу на сетке из 100 ячеек!\nВыбирай ячейки, делай ставки бонусными или реальными монетами, и забирай банк, если рулетка остановится на твоей ячейке.\n\nПриглашай друзей и получай 500 монет за каждого!\nТвоя ссылка:\nhttps://t.me/GridLotteryBot/app?startapp=ref_' + userId + '\n\nНажми кнопку ниже, чтобы зайти в комнату:', {
         reply_markup: {
             inline_keyboard: [
                 [{ text: '🕹 Открыть игру', web_app: { url: webAppUrl } }]
@@ -466,11 +466,9 @@ function botLogic() {
 
         if (!bot.currentRoom) {
             bot.state = 'SEARCHING';
-            const availableRooms = rooms.filter(r => r.gamePhase === 'WAITING' || r.gamePhase === 'BETTING');
+            const availableRooms = rooms.filter(r => r.currency === 'BONUS' && (r.gamePhase === 'WAITING' || r.gamePhase === 'BETTING'));
             const roomsWithNoBots = availableRooms.filter(r => {
-                let hasBot = false;
-                r.players.forEach(pid => { if (String(pid).startsWith('bot_')) hasBot = true; });
-                return !hasBot && r.players.size < r.maxPlayers;
+                return r.players.size < r.maxPlayers;
             });
 
             if (roomsWithNoBots.length > 0) {
@@ -527,24 +525,6 @@ function botLogic() {
             if (hasRealPlayer) {
                 bot.hasSeenRealPlayer = true;
                 bot.emptyRoomSince = 0;
-            } else {
-                if (bot.emptyRoomSince === 0) bot.emptyRoomSince = now;
-                else {
-                    let timeout = bot.hasSeenRealPlayer ? 5000 : 15000;
-                    if (now - bot.emptyRoomSince > timeout) {
-                        room.players.delete(bot.id);
-                        room.playersData.delete(bot.id);
-                        io.to(room.id).emit('room_players', Array.from(room.playersData.values()));
-                        broadcastRoomsUpdate();
-                        bot.currentRoom = null;
-                        bot.state = 'WAITING';
-                        bot.emptyRoomSince = 0;
-                        bot.gamesPlayedInRoom = 0;
-                        reassignBotIdentity(bot);
-                        bot.nextActionTime = now + 5000;
-                        return;
-                    }
-                }
             }
 
             if (room.gamePhase === 'REWARD') {
@@ -559,7 +539,8 @@ function botLogic() {
                 bot.boughtCells = 0;
                 bot.targetCells = Math.floor(Math.random() * 16) + 5;
                 
-                if (bot.gamesPlayedInRoom >= 5) {
+                let leaveLimit = hasRealPlayer ? 10 : 3;
+                if (bot.gamesPlayedInRoom >= leaveLimit) {
                     room.players.delete(bot.id);
                     room.playersData.delete(bot.id);
                     io.to(room.id).emit('room_players', Array.from(room.playersData.values()));
@@ -580,12 +561,7 @@ function botLogic() {
             if (room.gamePhase === 'BETTING') {
                 bot.state = 'BETTING';
                 
-                let realPlayerBought = false;
-                room.gameState.forEach(cell => {
-                    if (cell !== null && !String(cell.telegram_id).startsWith('bot_')) realPlayerBought = true;
-                });
-                
-                if (bot.boughtCells < bot.targetCells && realPlayerBought) {
+                if (bot.boughtCells < bot.targetCells) {
                     let emptyIndices = [];
                     room.gameState.forEach((cell, idx) => { if (cell === null) emptyIndices.push(idx); });
                     
@@ -612,7 +588,7 @@ function botLogic() {
                         bot.nextActionTime = now + 5000; // Room is full
                     }
                 } else {
-                    bot.state = realPlayerBought ? 'WAITING_FOR_ROULETTE' : 'WAITING_FOR_PLAYER';
+                    bot.state = 'WAITING_FOR_ROULETTE';
                     bot.nextActionTime = now + 2000;
                 }
             } else {
@@ -921,6 +897,24 @@ io.on('connection', (socket) => {
             socket.emit('daily_bonus_success', `Вы получили ${gameSettings.dailyBonus} бонусных монет!`);
         } else {
             socket.emit('daily_bonus_error', 'Бонус пока недоступен');
+        }
+    });
+
+    socket.on('exchange_coins', () => {
+        if (isRateLimited(socket)) return;
+        const tgId = socket.userData.telegram_id;
+        let userRecord = users[tgId];
+        if (!userRecord) return;
+        if (userRecord.banned) return socket.emit('error', 'Аккаунт заблокирован');
+
+        if ((userRecord.balance_bonus || 0) >= 10000) {
+            userRecord.balance_bonus -= 10000;
+            userRecord.balance_real = (userRecord.balance_real || 0) + 10;
+            saveUsers();
+            io.emit('users_update', users);
+            socket.emit('exchange_success', 'Успешно обменено 10000 бонусов на 10 реал!');
+        } else {
+            socket.emit('error', 'Недостаточно бонусных монет для обмена (минимум 10000)');
         }
     });
 

@@ -386,6 +386,12 @@ class _MainScreenState extends State<MainScreen> {
       }
     });
 
+    socket.on('exchange_success', (msg) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString(), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+      }
+    });
+
     socket.onDisconnect((_) {
       if (mounted) setState(() {
         _isConnected = false;
@@ -945,6 +951,24 @@ class _MainScreenState extends State<MainScreen> {
                         ],
                       )
                     ],
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent.withOpacity(0.2),
+                      minimumSize: const Size(double.infinity, 40),
+                    ),
+                    icon: const Icon(Icons.sync_alt, color: Colors.blueAccent),
+                    label: const Text('Обменять 10000 🟡 на 10 🟢', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    onPressed: () {
+                      if (((myData['balance_bonus'] ?? 0) as num) >= 10000) {
+                        socket.emit('exchange_coins');
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Недостаточно бонусных монет для обмена (минимум 10000)')),
+                        );
+                      }
+                    },
                   ),
                 ],
               ),
