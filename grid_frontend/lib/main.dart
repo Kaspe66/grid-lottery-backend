@@ -67,7 +67,27 @@ class AppTranslations {
       'settings': 'Settings',
       'sound': 'Sound',
       'vibration': 'Vibration',
-      'not_enough_funds_deposit': 'Not enough funds on balance, please deposit!'
+      'not_enough_funds_deposit': 'Not enough funds on balance, please deposit!',
+      'error_telegram_only': 'Access only via Telegram',
+      'error_signature': 'Telegram signature error',
+      'error_banned': 'Your account is banned!',
+      'error_room_not_found': 'Room not found',
+      'error_room_full': 'Room is full',
+      'error_maintenance': 'Maintenance in progress. Bets are temporarily unavailable.',
+      'error_cell_taken': 'Cell is already taken',
+      'error_not_enough_real': 'Not enough real coins',
+      'error_not_enough_bonus': 'Not enough bonus coins',
+      'daily_bonus_success': 'You received your daily bonus!',
+      'error_daily_bonus_cooldown': 'Bonus is not available yet',
+      'exchange_success': 'Successfully exchanged 10000 bonus for 10 real!',
+      'error_exchange_not_enough': 'Not enough bonus coins for exchange (min 10000)',
+      'error_invalid_wallet': 'Invalid TON wallet address.',
+      'error_min_withdrawal': 'Minimum withdrawal amount is 500 coins',
+      'error_no_deposit': 'At least one deposit is required to withdraw',
+      'error_server_withdrawal': 'Server error while creating request',
+      'withdrawal_success': 'Withdrawal request created successfully',
+      'exchange_btn_1': 'Exchange 10000 ',
+      'exchange_btn_2': ' for 10 '
     },
     'ru': {
       'room_selection': 'ВЫБОР КОМНАТЫ',
@@ -121,7 +141,27 @@ class AppTranslations {
       'settings': 'Настройки',
       'sound': 'Звук',
       'vibration': 'Вибрация',
-      'not_enough_funds_deposit': 'Недостаточно средств на балансе! Пожалуйста, пополните счет.'
+      'not_enough_funds_deposit': 'Недостаточно средств на балансе! Пожалуйста, пополните счет.',
+      'error_telegram_only': 'Доступ только через Telegram',
+      'error_signature': 'Ошибка подписи Telegram',
+      'error_banned': 'Ваш аккаунт заблокирован!',
+      'error_room_not_found': 'Комната не найдена',
+      'error_room_full': 'Комната переполнена',
+      'error_maintenance': 'Идут технические работы. Ставки временно недоступны.',
+      'error_cell_taken': 'Ячейка уже занята',
+      'error_not_enough_real': 'Недостаточно реальных средств',
+      'error_not_enough_bonus': 'Недостаточно бонусных средств',
+      'daily_bonus_success': 'Вы получили ежедневный бонус!',
+      'error_daily_bonus_cooldown': 'Бонус пока недоступен',
+      'exchange_success': 'Успешно обменено 10000 бонусов на 10 реал!',
+      'error_exchange_not_enough': 'Недостаточно бонусных монет для обмена (минимум 10000)',
+      'error_invalid_wallet': 'Некорректный адрес кошелька TON.',
+      'error_min_withdrawal': 'Минимальная сумма вывода - 500 монет',
+      'error_no_deposit': 'Для вывода средств необходим хотя бы один депозит (пополнение)',
+      'error_server_withdrawal': 'Ошибка сервера при создании заявки',
+      'withdrawal_success': 'Заявка на вывод успешно создана',
+      'exchange_btn_1': 'Обменять 10000 ',
+      'exchange_btn_2': ' на 10 '
     }
   };
 
@@ -358,37 +398,37 @@ class _MainScreenState extends State<MainScreen> {
 
     socket.on('error', (msg) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString(), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppTranslations.t(msg.toString()), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
       }
     });
 
     socket.on('daily_bonus_success', (msg) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString(), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppTranslations.t(msg.toString()), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.green));
       }
     });
 
     socket.on('daily_bonus_error', (msg) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString(), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppTranslations.t(msg.toString()), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
       }
     });
 
     socket.on('withdrawal_success', (msg) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString(), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppTranslations.t(msg.toString()), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.green));
       }
     });
 
     socket.on('withdrawal_error', (msg) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString(), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppTranslations.t(msg.toString()), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
       }
     });
 
     socket.on('exchange_success', (msg) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString(), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppTranslations.t(msg.toString()), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.green));
       }
     });
 
@@ -961,11 +1001,11 @@ class _MainScreenState extends State<MainScreen> {
                     icon: const Icon(Icons.sync_alt, color: Colors.blueAccent),
                     label: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Text('Обменять 10000 ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        Icon(Icons.monetization_on, color: Colors.blue, size: 18),
-                        Text(' на 10 ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        Icon(Icons.monetization_on, color: Colors.green, size: 18),
+                      children: [
+                        Text(AppTranslations.t('exchange_btn_1'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        const Icon(Icons.monetization_on, color: Colors.blue, size: 18),
+                        Text(AppTranslations.t('exchange_btn_2'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        const Icon(Icons.monetization_on, color: Colors.green, size: 18),
                       ],
                     ),
                     onPressed: () {
@@ -973,7 +1013,7 @@ class _MainScreenState extends State<MainScreen> {
                         socket.emit('exchange_coins');
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Недостаточно бонусных монет для обмена (минимум 10000)')),
+                          SnackBar(content: Text(AppTranslations.t('error_exchange_not_enough'))),
                         );
                       }
                     },

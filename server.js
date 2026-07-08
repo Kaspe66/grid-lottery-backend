@@ -33,11 +33,22 @@ app.get('/avatar', async (req, res) => {
 
 bot.start((ctx) => {
     const userId = ctx.from.id;
-    ctx.setChatMenuButton({ type: 'web_app', text: 'Играть 🎲', web_app: { url: webAppUrl } }).catch(e => console.log(e));
-    ctx.reply('Добро пожаловать в Grid Lottery! 🎲\n\nУникальная игра, где ты можешь испытать удачу на сетке из 100 ячеек!\nВыбирай ячейки, делай ставки бонусными или реальными монетами, и забирай банк, если рулетка остановится на твоей ячейке.\n\nПриглашай друзей и получай 500 монет за каждого!\nТвоя ссылка:\nhttps://t.me/GridLotteryBot/app?startapp=ref_' + userId + '\n\nНажми кнопку ниже, чтобы зайти в комнату:', {
+    const lang = ctx.from.language_code;
+    let menuText = 'Играть 🎲';
+    let msgText = 'Добро пожаловать в Grid Lottery! 🎲\n\nУникальная игра, где ты можешь испытать удачу на сетке из 100 ячеек!\nВыбирай ячейки, делай ставки бонусными или реальными монетами, и забирай банк, если рулетка остановится на твоей ячейке.\n\nПриглашай друзей и получай 500 монет за каждого!\nТвоя ссылка:\nhttps://t.me/GridLotteryBot/app?startapp=ref_' + userId + '\n\nНажми кнопку ниже, чтобы зайти в комнату:';
+    let btnText = '🕹 Открыть игру';
+
+    if (lang && !lang.startsWith('ru')) {
+        menuText = 'Play 🎲';
+        msgText = 'Welcome to Grid Lottery! 🎲\n\nA unique game where you can test your luck on a 100-cell grid!\nPick cells, place bets with bonus or real coins, and take the bank if the roulette stops on your cell.\n\nInvite friends and get 500 coins for each!\nYour link:\nhttps://t.me/GridLotteryBot/app?startapp=ref_' + userId + '\n\nClick the button below to join a room:';
+        btnText = '🕹 Open Game';
+    }
+
+    ctx.setChatMenuButton({ type: 'web_app', text: menuText, web_app: { url: webAppUrl } }).catch(e => console.log(e));
+    ctx.reply(msgText, {
         reply_markup: {
             inline_keyboard: [
-                [{ text: '🕹 Открыть игру', web_app: { url: webAppUrl } }]
+                [{ text: btnText, web_app: { url: webAppUrl } }]
             ]
         }
     });
@@ -674,13 +685,13 @@ io.on('connection', (socket) => {
 
     socket.on('auth', (userData, callback) => {
         if (!userData || !userData.initData) {
-            if (callback) callback({ success: false, message: 'Доступ только через Telegram' });
+            if (callback) callback({ success: false, message: 'error_telegram_only' });
             return;
         }
         
         const isValid = validateInitData(userData.initData, token);
         if (!isValid) {
-            if (callback) callback({ success: false, message: 'Ошибка подписи Telegram' });
+            if (callback) callback({ success: false, message: 'error_signature' });
             return;
         }
 
@@ -729,19 +740,19 @@ io.on('connection', (socket) => {
         } catch (e) {}
         
         if (users[tgIdCheck] && users[tgIdCheck].banned) {
-            if (callback) callback({ success: false, message: 'Ваш аккаунт заблокирован!' });
+            if (callback) callback({ success: false, message: 'error_banned' });
             return;
         }
 
         const room = getRoom(roomId);
         
         if (!room) {
-            if (callback) callback({ success: false, message: 'Комната не найдена' });
+            if (callback) callback({ success: false, message: 'error_room_not_found' });
             return;
         }
         
-        if (room.players.size >= room.maxPlayers) {
-            if (callback) callback({ success: false, message: 'Комната заполнена' });
+        if (room.players.size >= room.maxPlayers && !room.players.has(socket.id)) {
+            if (callback) callback({ success: false, message: 'error_room_full' });
             return;
         }
 
@@ -835,7 +846,7 @@ io.on('connection', (socket) => {
 
     socket.on('click_cell', (index) => {
         if (maintenanceMode) {
-            socket.emit('error', 'Идут технические работы. Ставки временно недоступны.');
+            socket.emit('error', 'error_maintenance');
             return;
         }
         if (isRateLimited(socket)) return;
@@ -844,7 +855,7 @@ io.on('connection', (socket) => {
         if (room.gamePhase !== 'BETTING') return;
         if (typeof index !== 'number' || index < 0 || index >= 100) return;
         if (room.gameState[index] !== null) {
-            socket.emit('error', 'Ячейка уже занята');
+            socket.emit('error', 'error_cell_taken');
             return; 
         }
 
@@ -852,7 +863,7 @@ io.on('connection', (socket) => {
         let userRecord = users[tgId];
         if (!userRecord) return;
         if (userRecord.banned) {
-            socket.emit('error', 'Ваш аккаунт заблокирован!');
+            socket.emit('error', 'error_banned');
             return;
         }
         
@@ -865,7 +876,7 @@ io.on('connection', (socket) => {
                 userRecord.balance_real -= price;
                 room.bank_real = (room.bank_real || 0) + price;
             } else {
-                socket.emit('error', 'Недостаточно реальных средств');
+                socket.emit('error', 'error_not_enough_real');
                 return;
             }
         } else if (room.currency === 'BONUS') {
@@ -873,7 +884,7 @@ io.on('connection', (socket) => {
                 userRecord.balance_bonus -= price;
                 room.bank_bonus = (room.bank_bonus || 0) + price;
             } else {
-                socket.emit('error', 'Недостаточно бонусных средств');
+                socket.emit('error', 'error_not_enough_bonus');
                 return;
             }
         }
@@ -900,7 +911,7 @@ io.on('connection', (socket) => {
         const tgId = socket.userData.telegram_id;
         let userRecord = users[tgId];
         if (!userRecord) return;
-        if (userRecord.banned) return socket.emit('daily_bonus_error', 'Аккаунт заблокирован');
+        if (userRecord.banned) return socket.emit('daily_bonus_error', 'error_banned');
 
         const now = Date.now();
         const lastClaim = userRecord.lastBonusClaim || 0;
@@ -911,9 +922,9 @@ io.on('connection', (socket) => {
             userRecord.lastBonusClaim = now;
             saveUsers();
             io.emit('users_update', users);
-            socket.emit('daily_bonus_success', `Вы получили ${gameSettings.dailyBonus} бонусных монет!`);
+            socket.emit('daily_bonus_success', 'daily_bonus_success');
         } else {
-            socket.emit('daily_bonus_error', 'Бонус пока недоступен');
+            socket.emit('daily_bonus_error', 'error_daily_bonus_cooldown');
         }
     });
 
@@ -922,16 +933,16 @@ io.on('connection', (socket) => {
         const tgId = socket.userData.telegram_id;
         let userRecord = users[tgId];
         if (!userRecord) return;
-        if (userRecord.banned) return socket.emit('error', 'Аккаунт заблокирован');
+        if (userRecord.banned) return socket.emit('error', 'error_banned');
 
         if ((userRecord.balance_bonus || 0) >= 10000) {
             userRecord.balance_bonus -= 10000;
             userRecord.balance_real = (userRecord.balance_real || 0) + 10;
             saveUsers();
             io.emit('users_update', users);
-            socket.emit('exchange_success', 'Успешно обменено 10000 бонусов на 10 реал!');
+            socket.emit('exchange_success', 'exchange_success');
         } else {
-            socket.emit('error', 'Недостаточно бонусных монет для обмена (минимум 10000)');
+            socket.emit('error', 'error_exchange_not_enough');
         }
     });
 
@@ -940,28 +951,28 @@ io.on('connection', (socket) => {
         const tgId = socket.userData.telegram_id;
         let userRecord = users[tgId];
         if (!userRecord) return;
-        if (userRecord.banned) return socket.emit('withdrawal_error', 'Аккаунт заблокирован');
+        if (userRecord.banned) return socket.emit('withdrawal_error', 'error_banned');
         
         const amount = data.amount || 0;
         const wallet = data.wallet || '';
         
         if (typeof wallet !== 'string' || wallet.length !== 48 || !(wallet.startsWith('UQ') || wallet.startsWith('EQ'))) {
-            socket.emit('withdrawal_error', 'Некорректный адрес кошелька TON. Он должен начинаться с UQ или EQ и содержать 48 символов.');
+            socket.emit('withdrawal_error', 'error_invalid_wallet');
             return;
         }
         
         if (amount < 500) {
-            socket.emit('withdrawal_error', 'Минимальная сумма вывода - 500 монет');
+            socket.emit('withdrawal_error', 'error_min_withdrawal');
             return;
         }
         
         if (!userRecord.hasDeposited) {
-            socket.emit('withdrawal_error', 'Для вывода средств необходим хотя бы один депозит (пополнение)');
+            socket.emit('withdrawal_error', 'error_no_deposit');
             return;
         }
         
         if ((userRecord.balance_real || 0) < amount) {
-            socket.emit('withdrawal_error', 'Недостаточно реальных монет для вывода');
+            socket.emit('withdrawal_error', 'error_not_enough_real');
             return;
         }
         
@@ -986,10 +997,10 @@ io.on('connection', (socket) => {
             body: JSON.stringify(withdrawData)
         }).then(() => {
             addEvent('WITHDRAW', `Игрок ${userRecord.name} запросил вывод ${amount} монет`);
-            socket.emit('withdrawal_success', 'Заявка на вывод успешно создана');
+            socket.emit('withdrawal_success', 'withdrawal_success');
         }).catch(err => {
             console.error('Ошибка создания вывода', err);
-            socket.emit('withdrawal_error', 'Ошибка сервера при создании заявки');
+            socket.emit('withdrawal_error', 'error_server_withdrawal');
         });
     });
 
