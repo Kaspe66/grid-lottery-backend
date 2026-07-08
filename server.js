@@ -61,6 +61,7 @@ const REWARD_TIME = 5;
 
 let maintenanceMode = false;
 let onlineSockets = new Set();
+let userSockets = new Map();
 
 let users = {}; 
 const DB_URL_USERS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/users.json';
@@ -719,6 +720,13 @@ io.on('connection', (socket) => {
             saveUsers();
         }
 
+        if (userSockets.has(tgId)) {
+            const oldSocket = userSockets.get(tgId);
+            oldSocket.emit('error', 'error_multiple_devices');
+            oldSocket.disconnect(true);
+        }
+        userSockets.set(tgId, socket);
+
         socket.emit('users_update', users);
         if (callback) callback({ success: true });
     });
@@ -1005,6 +1013,11 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
+        if (socket.userData && socket.userData.telegram_id) {
+            if (userSockets.get(socket.userData.telegram_id) === socket) {
+                userSockets.delete(socket.userData.telegram_id);
+            }
+        }
         onlineSockets.delete(socket.id);
         handleLeaveRoom(socket);
         console.log(`Игрок отключился: ${socket.id}`);

@@ -86,6 +86,7 @@ class AppTranslations {
       'error_no_deposit': 'At least one deposit is required to withdraw',
       'error_server_withdrawal': 'Server error while creating request',
       'withdrawal_success': 'Withdrawal request created successfully',
+      'error_multiple_devices': 'Logged in from another device',
       'exchange_btn_1': 'Exchange 10000 ',
       'exchange_btn_2': ' for 10 '
     },
@@ -160,6 +161,7 @@ class AppTranslations {
       'error_no_deposit': 'Для вывода средств необходим хотя бы один депозит (пополнение)',
       'error_server_withdrawal': 'Ошибка сервера при создании заявки',
       'withdrawal_success': 'Заявка на вывод успешно создана',
+      'error_multiple_devices': 'Выполнен вход с другого устройства',
       'exchange_btn_1': 'Обменять 10000 ',
       'exchange_btn_2': ' на 10 '
     }
