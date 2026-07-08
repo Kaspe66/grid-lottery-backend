@@ -37,7 +37,7 @@ class AppTranslations {
       'daily_bonus': 'Daily Bonus',
       'claim': 'Claim',
       'invite_friend': 'Invite Friend',
-      'referral_desc': 'Get 500 coins for each friend!',
+      'referral_desc': 'Get 50 coins for each friend!',
       'games_played': 'Games Played',
       'total_won': 'Total Won',
       'chat': 'Chat',
@@ -111,7 +111,7 @@ class AppTranslations {
       'daily_bonus': 'Ежедневный Бонус',
       'claim': 'Получить',
       'invite_friend': 'Пригласить Друга',
-      'referral_desc': 'Получи 500 монет за каждого!',
+      'referral_desc': 'Получи 50 монет за каждого!',
       'games_played': 'Сыграно игр',
       'total_won': 'Всего выиграно',
       'chat': 'Чат',
@@ -735,7 +735,7 @@ class _MainScreenState extends State<MainScreen> {
                   const SizedBox(height: 16),
                   Text(AppTranslations.t('daily_bonus'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  const Text('+50 Бонусных Монет', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  const Text('+10 Бонусных Монет', style: TextStyle(color: Colors.white70, fontSize: 16)),
                   const SizedBox(height: 24),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -768,7 +768,7 @@ class _MainScreenState extends State<MainScreen> {
             label: const Text('Share Link', style: TextStyle(fontSize: 18)),
             onPressed: () {
                String botUrl = 'https://t.me/GridLotteryBot/app?startapp=ref_$_myTelegramId';
-               String text = AppTranslations.langCode == 'ru' ? 'Присоединяйся к игре и получи 500 монет!' : 'Join the game and get 500 coins!';
+               String text = AppTranslations.langCode == 'ru' ? 'Присоединяйся к игре и получи 50 монет!' : 'Join the game and get 50 coins!';
                String encodedBotUrl = Uri.encodeComponent(botUrl);
                String encodedText = Uri.encodeComponent(text);
                String shareUrl = 'https://t.me/share/url?url=$encodedBotUrl&text=$encodedText';
