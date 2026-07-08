@@ -35,12 +35,12 @@ bot.start((ctx) => {
     const userId = ctx.from.id;
     const lang = ctx.from.language_code;
     let menuText = 'Играть 🎲';
-    let msgText = 'Добро пожаловать в Grid Lottery! 🎲\n\nУникальная игра, где ты можешь испытать удачу на сетке из 100 ячеек!\nВыбирай ячейки, делай ставки бонусными или реальными монетами, и забирай банк, если рулетка остановится на твоей ячейке.\n\nПриглашай друзей и получай 50 монет за каждого!\nТвоя ссылка:\nhttps://t.me/GridLotteryBot/app?startapp=ref_' + userId + '\n\nНажми кнопку ниже, чтобы зайти в комнату:';
+    let msgText = 'Добро пожаловать в Grid Lottery! 🎲\n\nУникальная игра, где ты можешь испытать удачу на сетке из 100 ячеек!\nВыбирай ячейки, делай ставки бонусными или реальными монетами, и забирай банк, если рулетка остановится на твоей ячейке.\n\nПриглашай друзей и получай 50 монет за каждого!\nТвоя ссылка:\nhttps://t.me/GridLottery_bot/app?startapp=ref_' + userId + '\n\nНажми кнопку ниже, чтобы зайти в комнату:';
     let btnText = '🕹 Открыть игру';
 
     if (lang && !lang.startsWith('ru')) {
         menuText = 'Play 🎲';
-        msgText = 'Welcome to Grid Lottery! 🎲\n\nA unique game where you can test your luck on a 100-cell grid!\nPick cells, place bets with bonus or real coins, and take the bank if the roulette stops on your cell.\n\nInvite friends and get 50 coins for each!\nYour link:\nhttps://t.me/GridLotteryBot/app?startapp=ref_' + userId + '\n\nClick the button below to join a room:';
+        msgText = 'Welcome to Grid Lottery! 🎲\n\nA unique game where you can test your luck on a 100-cell grid!\nPick cells, place bets with bonus or real coins, and take the bank if the roulette stops on your cell.\n\nInvite friends and get 50 coins for each!\nYour link:\nhttps://t.me/GridLottery_bot/app?startapp=ref_' + userId + '\n\nClick the button below to join a room:';
         btnText = '🕹 Open Game';
     }
 
