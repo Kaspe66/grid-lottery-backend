@@ -277,6 +277,19 @@ function finishRoulette(room, winningIndex) {
     room.timeLeft = REWARD_TIME;
     io.to(room.id).emit('roulette_finish', winningIndex);
     
+    // Обновляем статистику сыгранных игр (1 раз за раунд на уникального игрока)
+    let playersInRound = new Set();
+    room.gameState.forEach(cell => {
+        if (cell !== null && !String(cell.telegram_id).startsWith('bot_')) {
+            playersInRound.add(cell.telegram_id);
+        }
+    });
+    playersInRound.forEach(tgId => {
+        if (users[tgId]) {
+            users[tgId].stats.gamesPlayed = (users[tgId].stats.gamesPlayed || 0) + 1;
+        }
+    });
+    
     let rewardData = {
         hasWinner: false,
         cell: winningIndex + 1
@@ -863,7 +876,6 @@ io.on('connection', (socket) => {
         }
             
             userRecord.stats.totalSpent += price;
-            userRecord.stats.gamesPlayed++;
             room.bank += price;           
             saveUsers();
             

@@ -959,7 +959,15 @@ class _MainScreenState extends State<MainScreen> {
                       minimumSize: const Size(double.infinity, 40),
                     ),
                     icon: const Icon(Icons.sync_alt, color: Colors.blueAccent),
-                    label: const Text('Обменять 10000 🟡 на 10 🟢', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('Обменять 10000 ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        Icon(Icons.monetization_on, color: Colors.blue, size: 18),
+                        Text(' на 10 ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        Icon(Icons.monetization_on, color: Colors.green, size: 18),
+                      ],
+                    ),
                     onPressed: () {
                       if (((myData['balance_bonus'] ?? 0) as num) >= 10000) {
                         socket.emit('exchange_coins');
