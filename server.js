@@ -484,7 +484,11 @@ function botLogic() {
             const roomsWithNoBots = availableRooms.filter(r => {
                 let botCount = 0;
                 r.players.forEach(pid => { if (String(pid).startsWith('bot_')) botCount++; });
-                return botCount < 4 && r.players.size < r.maxPlayers && getRoomNum(r.id) <= 3;
+                
+                // Псевдослучайный лимит ботов для конкретной комнаты от 2 до 4
+                let maxBotsForThisRoom = 2 + (r.id.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0) % 3);
+                
+                return botCount < maxBotsForThisRoom && r.players.size < r.maxPlayers && getRoomNum(r.id) <= 3;
             });
 
             if (roomsWithNoBots.length > 0) {
