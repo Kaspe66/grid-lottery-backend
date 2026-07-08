@@ -468,7 +468,9 @@ function botLogic() {
             bot.state = 'SEARCHING';
             const availableRooms = rooms.filter(r => r.currency === 'BONUS' && (r.gamePhase === 'WAITING' || r.gamePhase === 'BETTING'));
             const roomsWithNoBots = availableRooms.filter(r => {
-                return r.players.size < r.maxPlayers;
+                let botCount = 0;
+                r.players.forEach(pid => { if (String(pid).startsWith('bot_')) botCount++; });
+                return botCount < 4 && r.players.size < r.maxPlayers;
             });
 
             if (roomsWithNoBots.length > 0) {
