@@ -767,11 +767,15 @@ class _MainScreenState extends State<MainScreen> {
             icon: const Icon(Icons.share, color: Colors.blueAccent),
             label: const Text('Share Link', style: TextStyle(fontSize: 18)),
             onPressed: () {
-               String link = 'https://t.me/GridLotteryBot/app?startapp=ref_$_myTelegramId';
+               String botUrl = 'https://t.me/GridLotteryBot/app?startapp=ref_$_myTelegramId';
+               String text = AppTranslations.langCode == 'ru' ? 'Присоединяйся к игре и получи 500 монет!' : 'Join the game and get 500 coins!';
+               String encodedBotUrl = Uri.encodeComponent(botUrl);
+               String encodedText = Uri.encodeComponent(text);
+               String shareUrl = 'https://t.me/share/url?url=$encodedBotUrl&text=$encodedText';
                try {
-                 js.context['Telegram']['WebApp'].callMethod('openTelegramLink', [link]);
+                 js.context['Telegram']['WebApp'].callMethod('openTelegramLink', [shareUrl]);
                } catch(e) {
-                 print(link);
+                 print(shareUrl);
                }
             },
           ),
