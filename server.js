@@ -721,9 +721,10 @@ io.on('connection', (socket) => {
         }
 
         if (userSockets.has(tgId)) {
-            const oldSocket = userSockets.get(tgId);
-            oldSocket.emit('error', 'error_multiple_devices');
-            oldSocket.disconnect(true);
+            socket.emit('error', 'error_multiple_devices');
+            if (callback) callback({ success: false, message: 'error_multiple_devices' });
+            socket.disconnect(true);
+            return;
         }
         userSockets.set(tgId, socket);
 
