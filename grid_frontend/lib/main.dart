@@ -242,6 +242,7 @@ class _MainScreenState extends State<MainScreen> {
 
   bool _isSoundEnabled = true;
   bool _isVibrationEnabled = true;
+  String _deviceId = '';
   late ConfettiController _confettiController;
   final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -249,8 +250,9 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
-    _loadSettings();
-    _initTelegramAndSocket();
+    _loadSettings().then((_) {
+      _initTelegramAndSocket();
+    });
     _walletTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
        _checkWallet();
     });
@@ -272,6 +274,14 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    
+    String? did = prefs.getString('device_id');
+    if (did == null) {
+      did = DateTime.now().millisecondsSinceEpoch.toString() + '_' + (1000 + DateTime.now().microsecond % 9000).toString();
+      await prefs.setString('device_id', did);
+    }
+    _deviceId = did;
+
     if (mounted) {
       setState(() {
         _isSoundEnabled = prefs.getBool('sound_enabled') ?? true;
@@ -376,7 +386,8 @@ class _MainScreenState extends State<MainScreen> {
         'initData': _initData,
         'telegram_id': _myTelegramId,
         'username': _myName,
-        'color': '#FFFFFF'
+        'color': '#FFFFFF',
+        'deviceId': _deviceId
       }, ack: (response) {
         if (response != null && response['success'] == true) {
           print("Authenticated successfully");

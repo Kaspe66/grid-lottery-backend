@@ -721,11 +721,19 @@ io.on('connection', (socket) => {
         }
 
         if (userSockets.has(tgId)) {
-            socket.emit('error', 'error_multiple_devices');
-            if (callback) callback({ success: false, message: 'error_multiple_devices' });
-            socket.disconnect(true);
-            return;
+            const oldSocket = userSockets.get(tgId);
+            if (oldSocket.deviceId === userData.deviceId && userData.deviceId) {
+                if (oldSocket.id !== socket.id) {
+                    oldSocket.disconnect(true);
+                }
+            } else {
+                socket.emit('error', 'error_multiple_devices');
+                if (callback) callback({ success: false, message: 'error_multiple_devices' });
+                socket.disconnect(true);
+                return;
+            }
         }
+        socket.deviceId = userData.deviceId;
         userSockets.set(tgId, socket);
 
         socket.emit('users_update', users);
