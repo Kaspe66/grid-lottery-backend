@@ -409,6 +409,10 @@ class _MainScreenState extends State<MainScreen> {
       });
     });
 
+    socket.on('ping_check', (_) {
+      socket.emit('ping_response');
+    });
+
     socket.on('error', (msg) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppTranslations.t(msg.toString()), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
