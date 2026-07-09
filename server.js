@@ -748,35 +748,11 @@ io.on('connection', (socket) => {
         }
 
         if (userSockets.has(tgId)) {
-            const oldSocket = userSockets.get(tgId);
-            if (oldSocket.id === socket.id) return;
-
-            let isAlive = false;
-            
-            const onPingResponse = () => {
-                isAlive = true;
-                clearTimeout(timeout);
-                socket.emit('error', 'error_multiple_devices');
-                if (callback) callback({ success: false, message: 'error_multiple_devices' });
-                socket.disconnect(true);
-                oldSocket.off('ping_response', onPingResponse);
-            };
-            
-            oldSocket.on('ping_response', onPingResponse);
-            oldSocket.emit('ping_check');
-            
-            const timeout = setTimeout(() => {
-                if (!isAlive) {
-                    oldSocket.off('ping_response', onPingResponse);
-                    oldSocket.disconnect(true);
-                    userSockets.set(tgId, socket);
-                    socket.emit('users_update', users);
-                    if (callback) callback({ success: true });
-                }
-            }, 1500);
+            socket.emit('error', 'error_multiple_devices');
+            if (callback) callback({ success: false, message: 'error_multiple_devices' });
+            socket.disconnect(true);
             return;
         }
-        
         userSockets.set(tgId, socket);
 
         socket.emit('users_update', users);
