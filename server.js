@@ -746,13 +746,7 @@ io.on('connection', (socket) => {
             users[tgId] = createUserObject(50);
             saveUsers();
         }
-
-        if (userSockets.has(tgId)) {
-            socket.emit('error', 'error_multiple_devices');
-            if (callback) callback({ success: false, message: 'error_multiple_devices' });
-            socket.disconnect(true);
-            return;
-        }
+        
         userSockets.set(tgId, socket);
 
         socket.emit('users_update', users);
