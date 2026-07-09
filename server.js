@@ -292,13 +292,21 @@ function finishRoulette(room, winningIndex) {
     // Обновляем статистику сыгранных игр (1 раз за раунд на уникального игрока)
     let playersInRound = new Set();
     room.gameState.forEach(cell => {
-        if (cell !== null && !String(cell.telegram_id).startsWith('bot_')) {
+        if (cell !== null) {
             playersInRound.add(cell.telegram_id);
         }
     });
     playersInRound.forEach(tgId => {
         if (users[tgId]) {
             users[tgId].stats.gamesPlayed = (users[tgId].stats.gamesPlayed || 0) + 1;
+        } else if (String(tgId).startsWith('bot_')) {
+            users[tgId] = createUserObject(0);
+            let b = BOTS.find(x => x.id === tgId);
+            if (b) {
+                users[tgId].name = b.name;
+                users[tgId].photo_url = b.photo_url;
+            }
+            users[tgId].stats.gamesPlayed = 1;
         }
     });
     
@@ -350,6 +358,14 @@ function finishRoulette(room, winningIndex) {
             if (bot) {
                 bot.totalWonReal = (bot.totalWonReal || 0) + botRealProfit;
                 bot.totalWonBonus = (bot.totalWonBonus || 0) + botBonusProfit;
+                
+                if (!users[bot.id]) users[bot.id] = createUserObject(0);
+                users[bot.id].name = bot.name;
+                users[bot.id].photo_url = bot.photo_url;
+                users[bot.id].stats.wins = (users[bot.id].stats.wins || 0) + 1;
+                users[bot.id].stats.totalWon = (users[bot.id].stats.totalWon || 0) + winAmountTotal;
+                users[bot.id].stats.totalWonReal = (users[bot.id].stats.totalWonReal || 0) + winAmountReal;
+                users[bot.id].stats.totalWonBonus = (users[bot.id].stats.totalWonBonus || 0) + winAmountBonus;
             }
         } else {
             if (users[winnerData.telegram_id]) {
@@ -429,6 +445,10 @@ function reassignBotIdentity(bot) {
     bot.name = getRandomBotName();
     bot.color = getRandomBotColor();
     bot.photo_url = getRandomBotPhoto(bot.name + Math.random());
+    if (typeof users !== 'undefined' && users[bot.id]) {
+        users[bot.id].name = bot.name;
+        users[bot.id].photo_url = bot.photo_url;
+    }
 }
 
 const BOTS = [];
