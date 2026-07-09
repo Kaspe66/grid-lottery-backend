@@ -421,17 +421,24 @@ function getRandomBotColor() {
     return colors[Math.floor(Math.random() * colors.length)];
 }
 
+function getRandomBotPhoto(seed) {
+    return `https://i.pravatar.cc/150?u=${encodeURIComponent(seed)}`;
+}
+
 function reassignBotIdentity(bot) {
     bot.name = getRandomBotName();
     bot.color = getRandomBotColor();
+    bot.photo_url = getRandomBotPhoto(bot.name + Math.random());
 }
 
 const BOTS = [];
 for (let i = 1; i <= 20; i++) {
+    let name = getRandomBotName();
     BOTS.push({
         id: 'bot_' + i,
-        name: getRandomBotName(),
+        name: name,
         color: getRandomBotColor(),
+        photo_url: getRandomBotPhoto(name + Math.random()),
         currentRoom: null,
         targetCells: 0,
         boughtCells: 0,
@@ -521,7 +528,7 @@ function botLogic() {
                     telegram_id: bot.id,
                     username: bot.name,
                     first_name: bot.name,
-                    photo_url: '',
+                    photo_url: bot.photo_url,
                     color: bot.color
                 });
                 
@@ -607,7 +614,7 @@ function botLogic() {
                             telegram_id: bot.id,
                             color: bot.color,
                             first_name: bot.name,
-                            photo_url: ''
+                            photo_url: bot.photo_url
                         };
                         
                         io.to(room.id).emit('update_state', room.gameState);
