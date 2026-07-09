@@ -273,20 +273,25 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    
-    String? did = prefs.getString('device_id');
-    if (did == null) {
-      did = DateTime.now().millisecondsSinceEpoch.toString() + '_' + (1000 + DateTime.now().microsecond % 9000).toString();
-      await prefs.setString('device_id', did);
-    }
-    _deviceId = did;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      String? did = prefs.getString('device_id');
+      if (did == null) {
+        did = DateTime.now().millisecondsSinceEpoch.toString() + '_' + (1000 + DateTime.now().microsecond % 9000).toString();
+        await prefs.setString('device_id', did);
+      }
+      _deviceId = did;
 
-    if (mounted) {
-      setState(() {
-        _isSoundEnabled = prefs.getBool('sound_enabled') ?? true;
-        _isVibrationEnabled = prefs.getBool('vibration_enabled') ?? true;
-      });
+      if (mounted) {
+        setState(() {
+          _isSoundEnabled = prefs.getBool('sound_enabled') ?? true;
+          _isVibrationEnabled = prefs.getBool('vibration_enabled') ?? true;
+        });
+      }
+    } catch (e) {
+      print("SharedPreferences error: $e");
+      _deviceId = DateTime.now().millisecondsSinceEpoch.toString();
     }
   }
 
