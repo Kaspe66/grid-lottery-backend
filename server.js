@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { Telegraf } = require('telegraf');
 const express = require('express');
 const http = require('http');
@@ -5,8 +6,22 @@ const { Server } = require('socket.io');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const token = '7675654779:AAGiBuHXrNzX_VFnd6n1MGig1o1N2w8O3tg'; 
+const admin = require('firebase-admin');
+
+const token = process.env.BOT_TOKEN; 
 const webAppUrl = 'https://grid-lottery-game.web.app/?v=3'; 
+
+let serviceAccount;
+try {
+    serviceAccount = require(process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './serviceAccountKey.json');
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      databaseURL: process.env.FIREBASE_DB_URL
+    });
+} catch (e) {
+    console.error("Firebase Service Account error:", e.message);
+}
+const db = admin.database();
 
 const bot = new Telegraf(token);
 const app = express();
@@ -64,11 +79,10 @@ let onlineSockets = new Set();
 let userSockets = new Map();
 
 let users = {}; 
-const DB_URL_USERS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/users.json';
-const DB_URL_BALANCES = 'https://grid-lottery-game-default-rtdb.firebaseio.com/balances.json';
-const DB_URL_WITHDRAWALS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/withdrawals.json';
-const DB_URL_SETTINGS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/settings.json';
-const DB_URL_DEPOSITS = 'https://grid-lottery-game-default-rtdb.firebaseio.com/deposits.json';
+const usersRef = db.ref('users');
+const depositsRef = db.ref('deposits');
+const settingsRef = db.ref('settings');
+const withdrawalsRef = db.ref('withdrawals');
 
 let gameSettings = {
     dailyBonus: 10,
@@ -77,18 +91,15 @@ let gameSettings = {
     botsEnabled: false
 };
 
-fetch(DB_URL_SETTINGS).then(r => r.json()).then(data => {
+settingsRef.once('value').then(snap => {
+    const data = snap.val();
     if (data) {
         gameSettings = { ...gameSettings, ...data };
     }
 }).catch(err => console.error('Ошибка загрузки настроек:', err));
 
 function saveSettings() {
-    fetch(DB_URL_SETTINGS, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(gameSettings)
-    }).catch(e => {});
+    settingsRef.set(gameSettings).catch(e => console.error(e));
 }
 
 let liveEvents = [];
@@ -98,16 +109,13 @@ function addEvent(type, message) {
 }
 
 let allDeposits = {};
-fetch(DB_URL_DEPOSITS).then(r => r.json()).then(data => {
+depositsRef.once('value').then(snap => {
+    const data = snap.val();
     if (data) allDeposits = data;
 }).catch(err => console.error('Ошибка загрузки депозитов:', err));
 
 function saveDeposits() {
-    fetch(DB_URL_DEPOSITS, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(allDeposits)
-    }).catch(e => {});
+    depositsRef.set(allDeposits).catch(e => console.error(e));
 }
 
 function createUserObject(balance = 50) {
@@ -126,9 +134,9 @@ function createUserObject(balance = 50) {
     };
 }
 
-fetch(DB_URL_USERS)
-    .then(res => res.json())
-    .then(data => {
+usersRef.once('value')
+    .then(snap => {
+        const data = snap.val();
         if (data) {
             users = data;
             
@@ -154,7 +162,8 @@ fetch(DB_URL_USERS)
             
             console.log('Пользователи загружены.');
         } else {
-            fetch(DB_URL_BALANCES).then(r => r.json()).then(oldBalances => {
+            db.ref('balances').once('value').then(snap => {
+                const oldBalances = snap.val();
                 if (oldBalances) {
                     for (let id in oldBalances) {
                         users[id] = createUserObject(oldBalances[id]);
@@ -168,11 +177,7 @@ fetch(DB_URL_USERS)
     .catch(err => console.error('Ошибка загрузки базы данных:', err));
 
 function saveUsers() {
-    fetch(DB_URL_USERS, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(users)
-    }).catch(err => console.error('Ошибка сохранения БД:', err));
+    usersRef.set(users).catch(err => console.error('Ошибка сохранения БД:', err));
 }
 
 function getColorForId(id) {
@@ -1021,11 +1026,7 @@ io.on('connection', (socket) => {
             timestamp: Date.now()
         };
         
-        fetch(`${DB_URL_WITHDRAWALS.replace('.json', '')}/${withdrawId}.json`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(withdrawData)
-        }).then(() => {
+        withdrawalsRef.child(withdrawId).set(withdrawData).then(() => {
             addEvent('WITHDRAW', `Игрок ${userRecord.name} запросил вывод ${amount} монет`);
             socket.emit('withdrawal_success', 'withdrawal_success');
         }).catch(err => {
@@ -1083,7 +1084,8 @@ io.on('connection', (socket) => {
 // ==========================================
 // ИНТЕГРАЦИЯ TON (ПОПОЛНЕНИЯ)
 // ==========================================
-const PROJECT_WALLET = 'UQBxu51QZAAzUfi1WJLSS6SOYuEDu9W18Bsjw4ZfCMtF_TUh'; // ЗАМЕНИТЕ НА СВОЙ КОШЕЛЕК
+const PROJECT_WALLET = process.env.PROJECT_WALLET;
+const TONCENTER_API_KEY = process.env.TONCENTER_API_KEY;
 const TRANSACTIONS_FILE = path.join(__dirname, 'transactions.json');
 let processedTransactions = new Set();
 
@@ -1096,22 +1098,37 @@ if (fs.existsSync(TRANSACTIONS_FILE)) {
     }
 }
 
-function saveTransactions() {
-    fs.writeFileSync(TRANSACTIONS_FILE, JSON.stringify(Array.from(processedTransactions)), 'utf8');
+async function saveTransactions() {
+    try {
+        const tmpFile = TRANSACTIONS_FILE + '.tmp';
+        await fs.promises.writeFile(tmpFile, JSON.stringify(Array.from(processedTransactions)), 'utf8');
+        await fs.promises.rename(tmpFile, TRANSACTIONS_FILE);
+    } catch (err) {
+        console.error('Ошибка атомарного сохранения transactions.json', err);
+    }
 }
 
 async function checkTonTransactions() {
-    if (PROJECT_WALLET.includes('XXXXX')) return; // Отключено, пока нет реального кошелька
+    if (!PROJECT_WALLET || PROJECT_WALLET.includes('XXXXX')) return;
     
     try {
-        const response = await fetch(`https://toncenter.com/api/v2/getTransactions?address=${PROJECT_WALLET}&limit=10`);
+        const headers = {};
+        if (TONCENTER_API_KEY) {
+            headers['X-API-Key'] = TONCENTER_API_KEY;
+        }
+        
+        const response = await fetch(`https://toncenter.com/api/v2/getTransactions?address=${PROJECT_WALLET}&limit=50`, { headers });
         const data = await response.json();
         
         if (data.ok && data.result) {
             let updated = false;
+            // Toncenter returns transactions from newest to oldest
             for (const tx of data.result) {
                 const hash = tx.transaction_id.hash;
-                if (processedTransactions.has(hash)) continue;
+                if (processedTransactions.has(hash)) {
+                    // We reached already processed transactions, stop iteration
+                    continue; 
+                }
                 
                 processedTransactions.add(hash);
                 updated = true;
@@ -1124,9 +1141,6 @@ async function checkTonTransactions() {
                     if (msg.startsWith('deposit_')) {
                         const tgId = msg.split('_')[1];
                         
-                        // Курс: 1 Gram (1 000 000 000 nano) = 1000 игровых монет
-                        // Следовательно: 1000 монет / 1 000 000 000 = 0.000001
-                        // amountInCoins = value (в нано-граммах) / 1,000,000
                         const amountInCoins = Math.floor(value / 1000000); 
                         
                         if (amountInCoins > 0) {
@@ -1137,7 +1151,7 @@ async function checkTonTransactions() {
                             users[tgId].hasDeposited = true;
                             console.log(`Успешное пополнение: Игрок ${tgId} получил ${amountInCoins} монет за ${value} nanoGram.`);
                             saveUsers();
-                            io.emit('users_update', users); // Обновляем балансы у всех (включая самого игрока)
+                            io.emit('users_update', users);
                             
                             addEvent('DEPOSIT', `Игрок ${users[tgId].name} пополнил счет на ${amountInCoins} реальных монет`);
                             const depId = `dep_${Date.now()}_${tgId}`;
@@ -1154,8 +1168,10 @@ async function checkTonTransactions() {
                 }
             }
             if (updated) {
-                saveTransactions();
+                await saveTransactions();
             }
+        } else if (!data.ok) {
+            console.error('Ошибка от TonCenter:', data);
         }
     } catch (e) {
         console.error('Ошибка проверки транзакций TON:', e.message);
@@ -1254,7 +1270,8 @@ app.post('/admin/users/:id', requireAdmin, (req, res) => {
 
 app.get('/admin/withdrawals', requireAdmin, async (req, res) => {
     try {
-        let data = await fetch(DB_URL_WITHDRAWALS).then(r => r.json());
+        let snap = await withdrawalsRef.once('value');
+        let data = snap.val();
         res.json({ success: true, withdrawals: data || {} });
     } catch (e) {
         res.status(500).json({ success: false, message: 'Fetch error' });
@@ -1265,7 +1282,8 @@ app.post('/admin/withdrawals/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     try {
-        let data = await fetch(DB_URL_WITHDRAWALS).then(r => r.json());
+        let snap = await withdrawalsRef.once('value');
+        let data = snap.val();
         if (!data || !data[id]) return res.status(404).json({ success: false, message: 'Not found' });
         
         let wd = data[id];
@@ -1294,11 +1312,7 @@ app.post('/admin/withdrawals/:id', requireAdmin, async (req, res) => {
             try { bot.telegram.sendMessage(wd.userId, `✅ Ваша заявка на вывод ${wd.amount} монет успешно обработана!`); } catch(e){}
         }
         
-        await fetch(`${DB_URL_WITHDRAWALS.replace('.json', '')}/${id}.json`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(wd)
-        });
+        await withdrawalsRef.child(id).set(wd);
         
         res.json({ success: true, withdrawal: wd });
     } catch (e) {
