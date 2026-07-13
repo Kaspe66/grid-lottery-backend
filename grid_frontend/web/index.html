@@ -52,7 +52,7 @@
           const rawAddress = tonConnectUI.account.address;
           try {
               const address = new window.TonWeb.utils.Address(rawAddress);
-              return address.toString(true, true, true); // (isUserFriendly, isUrlSafe, isBounceable)
+              return address.toString(true, true, false); // (isUserFriendly, isUrlSafe, isBounceable=false)
           } catch(e) {
               return rawAddress;
           }
