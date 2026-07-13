@@ -6,22 +6,24 @@ const { Server } = require('socket.io');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const admin = require('firebase-admin');
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getDatabase } = require('firebase-admin/database');
 
 const token = process.env.BOT_TOKEN; 
 const webAppUrl = 'https://grid-lottery-game.web.app/?v=3'; 
 
 let serviceAccount;
+let db;
 try {
     serviceAccount = require(process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './serviceAccountKey.json');
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
+    const appFirebase = initializeApp({
+      credential: cert(serviceAccount),
       databaseURL: process.env.FIREBASE_DB_URL
     });
+    db = getDatabase(appFirebase);
 } catch (e) {
     console.error("Firebase Service Account error:", e.message);
 }
-const db = admin.database();
 
 const bot = new Telegraf(token);
 const app = express();
