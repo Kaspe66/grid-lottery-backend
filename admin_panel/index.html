@@ -22,6 +22,7 @@
             <nav>
                 <button class="nav-btn active" data-tab="dashboard">📊 Дашборд</button>
                 <button class="nav-btn" data-tab="users">👥 Пользователи</button>
+                <button class="nav-btn" data-tab="leaders">🏆 Лидеры</button>
                 <button class="nav-btn" data-tab="withdrawals">💸 Выводы</button>
                 <button class="nav-btn" data-tab="deposits">💳 Депозиты</button>
                 <button class="nav-btn" data-tab="settings">⚙️ Настройки</button>
@@ -123,6 +124,33 @@
                             </tr>
                         </thead>
                         <tbody id="users-tbody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB: LEADERS -->
+            <section id="tab-leaders" class="tab-content">
+                <header class="header">
+                    <h2>Топ Игроков</h2>
+                    <select id="leader-sort" class="search-input" style="width: auto;">
+                        <option value="wonReal">По выигрышам (Реал)</option>
+                        <option value="balanceReal">По балансу (Реал)</option>
+                        <option value="games">По сыгранным играм</option>
+                    </select>
+                </header>
+                <div class="glass-panel table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Место</th>
+                                <th>Telegram ID</th>
+                                <th>Имя</th>
+                                <th>Реал (Баланс)</th>
+                                <th>Выиграно (Реал)</th>
+                                <th>Сыграно игр</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaders-tbody"></tbody>
                     </table>
                 </div>
             </section>

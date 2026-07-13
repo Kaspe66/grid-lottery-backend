@@ -67,6 +67,7 @@ function loadActiveTab() {
     const activeTab = document.querySelector('.nav-btn.active').dataset.tab;
     if (activeTab === 'dashboard') loadDashboard();
     if (activeTab === 'users') loadUsers();
+    if (activeTab === 'leaders') loadLeaders();
     if (activeTab === 'withdrawals') loadWithdrawals();
     if (activeTab === 'settings') loadSettings();
     if (activeTab === 'logs') loadLogs();
@@ -162,6 +163,60 @@ function renderUsersTable() {
             <td class="action-btns">
                 <button class="btn-success" onclick="editUser('${id}')">Изменить</button>
             </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// --- LEADERS ---
+async function loadLeaders() {
+    try {
+        const data = await apiFetch('/admin/users');
+        allUsersData = data.users;
+        renderLeadersTable();
+    } catch(e) {}
+}
+
+document.getElementById('leader-sort')?.addEventListener('change', renderLeadersTable);
+
+function renderLeadersTable() {
+    const tbody = document.getElementById('leaders-tbody');
+    const sortBy = document.getElementById('leader-sort').value;
+    tbody.innerHTML = '';
+    
+    let usersList = Object.keys(allUsersData)
+        .filter(id => id !== '_SYSTEM_')
+        .map(id => ({ id, ...allUsersData[id] }));
+        
+    usersList.sort((a, b) => {
+        if (sortBy === 'wonReal') {
+            return ((b.stats && b.stats.totalWonReal) || 0) - ((a.stats && a.stats.totalWonReal) || 0);
+        } else if (sortBy === 'balanceReal') {
+            return (b.balance_real || 0) - (a.balance_real || 0);
+        } else if (sortBy === 'games') {
+            return ((b.stats && b.stats.gamesPlayed) || 0) - ((a.stats && a.stats.gamesPlayed) || 0);
+        }
+        return 0;
+    });
+    
+    // Top 50
+    usersList.slice(0, 50).forEach((u, index) => {
+        const tr = document.createElement('tr');
+        const wonReal = u.stats && u.stats.totalWonReal ? u.stats.totalWonReal : 0;
+        const games = u.stats && u.stats.gamesPlayed ? u.stats.gamesPlayed : 0;
+        
+        let placeIcon = index + 1;
+        if (index === 0) placeIcon = '🥇';
+        if (index === 1) placeIcon = '🥈';
+        if (index === 2) placeIcon = '🥉';
+        
+        tr.innerHTML = `
+            <td><strong style="font-size:1.2rem">${placeIcon}</strong></td>
+            <td>${u.id}</td>
+            <td>${u.name || 'User'}</td>
+            <td>${u.balance_real || 0}</td>
+            <td>${wonReal}</td>
+            <td>${games}</td>
         `;
         tbody.appendChild(tr);
     });
