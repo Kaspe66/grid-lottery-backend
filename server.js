@@ -28,6 +28,18 @@ try {
 const bot = new Telegraf(token);
 const app = express();
 app.use(express.json());
+
+// Динамический манифест для TON Connect (чтобы url всегда совпадал с доменом)
+app.get('/admin/tonconnect-manifest.json', (req, res) => {
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const host = req.get('host');
+    res.json({
+        "url": `${protocol}://${host}`,
+        "name": "GridLottery Admin",
+        "iconUrl": "https://ton.org/download/ton_symbol.png"
+    });
+});
+
 app.use('/admin', express.static(path.join(__dirname, 'admin_panel')));
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
