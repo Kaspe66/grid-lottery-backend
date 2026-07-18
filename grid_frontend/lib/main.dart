@@ -839,7 +839,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
       onPressed: () {
         final amountNano = gram * 1000000000;
-        final wallet = 'UQBxu51QZAAzUfi1WJLSS6SOYuEDu9W18Bsjw4ZfCMtF_TUh';
+        final wallet = 'UQAxfRdWYyuXMaCDNSYAzSd9u40HrZE8g7z-UQS4NBe-uKAA';
         final memo = 'deposit_$_myTelegramId';
         try {
           js.context.callMethod('sendTonTransaction', [
