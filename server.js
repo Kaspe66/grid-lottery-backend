@@ -1096,26 +1096,21 @@ io.on('connection', (socket) => {
 // ==========================================
 const PROJECT_WALLET = process.env.PROJECT_WALLET;
 const TONCENTER_API_KEY = process.env.TONCENTER_API_KEY;
-const TRANSACTIONS_FILE = path.join(__dirname, 'transactions.json');
+
 let processedTransactions = new Set();
+const txRef = db.ref('processed_transactions');
 
-if (fs.existsSync(TRANSACTIONS_FILE)) {
-    try {
-        const data = fs.readFileSync(TRANSACTIONS_FILE, 'utf8');
-        processedTransactions = new Set(JSON.parse(data));
-    } catch (err) {
-        console.error('Ошибка чтения transactions.json', err);
+txRef.once('value').then(snap => {
+    const data = snap.val();
+    if (data) {
+        processedTransactions = new Set(Object.keys(data));
+        console.log(`Загружено ${processedTransactions.size} обработанных транзакций из Firebase.`);
     }
-}
+}).catch(err => console.error('Ошибка загрузки транзакций из Firebase:', err));
 
-async function saveTransactions() {
-    try {
-        const tmpFile = TRANSACTIONS_FILE + '.tmp';
-        await fs.promises.writeFile(tmpFile, JSON.stringify(Array.from(processedTransactions)), 'utf8');
-        await fs.promises.rename(tmpFile, TRANSACTIONS_FILE);
-    } catch (err) {
-        console.error('Ошибка атомарного сохранения transactions.json', err);
-    }
+function markTransactionProcessed(hash) {
+    processedTransactions.add(hash);
+    txRef.child(hash).set(true).catch(e => console.error('Ошибка сохранения транзакции в Firebase:', e));
 }
 
 let isCheckingTon = false;
@@ -1143,13 +1138,13 @@ async function checkTonTransactions() {
                     continue; 
                 }
                 
-                // Игнорируем транзакции старше 1 часа (защита от повторного начисления при потере transactions.json)
+                // Игнорируем транзакции старше 1 часа (защита от спама старыми транзакциями)
                 if (Date.now() / 1000 - tx.utime > 3600) {
-                    processedTransactions.add(hash);
+                    markTransactionProcessed(hash);
                     continue;
                 }
                 
-                processedTransactions.add(hash);
+                markTransactionProcessed(hash);
                 updated = true;
                 
                 const inMsg = tx.in_msg;
@@ -1190,9 +1185,7 @@ async function checkTonTransactions() {
                     }
                 }
             }
-            if (updated) {
-                await saveTransactions();
-            }
+            // Сохранение теперь происходит атомарно в Firebase внутри markTransactionProcessed
         } else if (!data.ok) {
             console.error('Ошибка от TonCenter:', data);
         }
