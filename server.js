@@ -1118,9 +1118,12 @@ async function saveTransactions() {
     }
 }
 
+let isCheckingTon = false;
 async function checkTonTransactions() {
     if (!PROJECT_WALLET || PROJECT_WALLET.includes('XXXXX')) return;
+    if (isCheckingTon) return;
     
+    isCheckingTon = true;
     try {
         const headers = {};
         if (TONCENTER_API_KEY) {
@@ -1138,6 +1141,12 @@ async function checkTonTransactions() {
                 if (processedTransactions.has(hash)) {
                     // We reached already processed transactions, stop iteration
                     continue; 
+                }
+                
+                // Игнорируем транзакции старше 1 часа (защита от повторного начисления при потере transactions.json)
+                if (Date.now() / 1000 - tx.utime > 3600) {
+                    processedTransactions.add(hash);
+                    continue;
                 }
                 
                 processedTransactions.add(hash);
@@ -1189,10 +1198,12 @@ async function checkTonTransactions() {
         }
     } catch (e) {
         console.error('Ошибка проверки транзакций TON:', e.message);
+    } finally {
+        isCheckingTon = false;
     }
 }
 
-setInterval(checkTonTransactions, 15000); // Проверяем каждые 15 секунд
+setInterval(checkTonTransactions, 15000); // проверяем каждые 15 секунд
 // ==========================================
 
 // ==========================================
