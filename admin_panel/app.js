@@ -265,7 +265,7 @@ async function loadWithdrawals() {
             if (w.status === 'pending') {
                 const finalGram = Math.max(0, (w.amount / 1000) - 0.05);
                 const amountNano = Math.floor(finalGram * 1000000000);
-                const tonLink = `ton://transfer/${w.wallet}?amount=${amountNano}`;
+                const tonLink = `https://app.tonkeeper.com/transfer/${w.wallet}?amount=${amountNano}`;
 
                 statusHtml = '<span class="status-badge status-pending">Ожидает</span>';
                 btns = `
