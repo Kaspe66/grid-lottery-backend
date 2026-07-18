@@ -321,13 +321,13 @@ async function loadWithdrawals() {
                 const finalGram = Math.max(0, (w.amount / 1000) - 0.05);
                 const amountNano = Math.floor(finalGram * 1000000000);
                 const tonLinkWeb = `https://app.tonkeeper.com/transfer/${w.wallet}?amount=${amountNano}`;
-                const tonLinkTg = `https://t.me/share/url?url=ton://transfer/${w.wallet}%3Famount=${amountNano}&text=Перешлите%20себе%20в%20Избранное%20и%20нажмите%20на%20ссылку%20ниже%20чтобы%20оплатить%20через%20встроенный%20кошелек%20Telegram:`;
+                const tonLinkRaw = `ton://transfer/${w.wallet}?amount=${amountNano}`;
 
                 statusHtml = '<span class="status-badge status-pending">Ожидает</span>';
                 btns = `
                     <div style="display:flex; gap:5px; margin-bottom:5px;">
-                        <a href="${tonLinkWeb}" class="btn-primary" style="text-decoration: none; padding: 5px 10px; font-size: 12px; border-radius: 6px; background-color: #3b82f6; color: white;" target="_blank">🌐 Tonkeeper</a>
-                        <a href="${tonLinkTg}" class="btn-primary" style="text-decoration: none; padding: 5px 10px; font-size: 12px; border-radius: 6px; background-color: #2481cc; color: white;" target="_blank">✈️ Telegram</a>
+                        <a href="${tonLinkWeb}" class="btn-primary" style="text-decoration: none; padding: 5px 10px; font-size: 12px; border-radius: 6px; background-color: #3b82f6; color: white;" target="_blank">🌐 Web (Tonkeeper)</a>
+                        <a href="${tonLinkRaw}" class="btn-primary" style="text-decoration: none; padding: 5px 10px; font-size: 12px; border-radius: 6px; background-color: #2481cc; color: white;">⚡ Desktop (Telegram/Wallet)</a>
                     </div>
                     <button class="btn-success" onclick="processWithdrawal('${w.id}', 'approved')">Одобрить</button>
                     <button class="btn-danger" onclick="processWithdrawal('${w.id}', 'rejected')">Отклонить</button>
