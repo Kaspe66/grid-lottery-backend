@@ -263,8 +263,13 @@ async function loadWithdrawals() {
             let statusHtml = '';
             let btns = '';
             if (w.status === 'pending') {
+                const finalGram = Math.max(0, (w.amount / 1000) - 0.05);
+                const amountNano = Math.floor(finalGram * 1000000000);
+                const tonLink = `ton://transfer/${w.wallet}?amount=${amountNano}`;
+
                 statusHtml = '<span class="status-badge status-pending">Ожидает</span>';
                 btns = `
+                    <a href="${tonLink}" class="btn-primary" style="margin-right: 5px; text-decoration: none; display: inline-block; padding: 5px 10px; font-size: 12px; border-radius: 6px; background-color: #3b82f6; color: white;" target="_blank">💸 Оплатить TON</a>
                     <button class="btn-success" onclick="processWithdrawal('${w.id}', 'approved')">Одобрить</button>
                     <button class="btn-danger" onclick="processWithdrawal('${w.id}', 'rejected')">Отклонить</button>
                 `;

@@ -69,6 +69,13 @@ bot.start((ctx) => {
             ]
         }
     });
+
+    const tgIdStr = String(userId);
+    if (!users[tgIdStr]) {
+        users[tgIdStr] = createUserObject(50);
+    }
+    users[tgIdStr].lang = lang || 'ru';
+    saveUsers();
 });
 bot.launch();
 
@@ -132,7 +139,8 @@ function createUserObject(balance = 50) {
         name: 'User',
         photo_url: '',
         banned: false,
-        balance_locked: 0
+        balance_locked: 0,
+        lang: 'ru'
     };
 }
 
@@ -1161,7 +1169,11 @@ async function checkTonTransactions() {
                             saveDeposits();
                             
                             try {
-                                bot.telegram.sendMessage(tgId, `🎉 <b>Успешное пополнение!</b>\n\nВаш баланс пополнен на <b>${amountInCoins}</b> реальных монет.\n\nЖелаем приятной игры и крупных выигрышей! 🎲✨`, { parse_mode: 'HTML' });
+                                const userLang = users[tgId] && users[tgId].lang ? users[tgId].lang : 'ru';
+                                const msgRu = `🎉 <b>Успешное пополнение!</b>\n\nВаш баланс пополнен на <b>${amountInCoins}</b> реальных монет.\n\nЖелаем приятной игры и крупных выигрышей! 🎲✨`;
+                                const msgEn = `🎉 <b>Successful Top-up!</b>\n\nYour balance has been credited with <b>${amountInCoins}</b> real coins.\n\nEnjoy the game and good luck! 🎲✨`;
+                                const finalMsg = (userLang && !userLang.startsWith('ru')) ? msgEn : msgRu;
+                                bot.telegram.sendMessage(tgId, finalMsg, { parse_mode: 'HTML' });
                             } catch (e) {
                                 console.error(`Ошибка отправки сообщения пользователю ${tgId}:`, e.message);
                             }
@@ -1301,7 +1313,13 @@ app.post('/admin/withdrawals/:id', requireAdmin, async (req, res) => {
                 users[tgId].balance_real += wd.amount;
                 saveUsers();
                 io.emit('users_update', users);
-                try { bot.telegram.sendMessage(tgId, `❌ Ваша заявка на вывод ${wd.amount} монет отклонена. Монеты возвращены на баланс.`); } catch(e){}
+                try { 
+                    const userLang = users[tgId] && users[tgId].lang ? users[tgId].lang : 'ru';
+                    const msgRu = `❌ Ваша заявка на вывод ${wd.amount} монет отклонена. Монеты возвращены на баланс.`;
+                    const msgEn = `❌ Your withdrawal request for ${wd.amount} coins was rejected. Coins have been returned to your balance.`;
+                    const finalMsg = (userLang && !userLang.startsWith('ru')) ? msgEn : msgRu;
+                    bot.telegram.sendMessage(tgId, finalMsg); 
+                } catch(e){}
             }
         } else if (status === 'approved') {
             const tgId = wd.userId;
@@ -1311,7 +1329,17 @@ app.post('/admin/withdrawals/:id', requireAdmin, async (req, res) => {
                 saveUsers();
                 io.emit('users_update', users);
             }
-            try { bot.telegram.sendMessage(wd.userId, `✅ Ваша заявка на вывод ${wd.amount} монет успешно обработана!`); } catch(e){}
+            try { 
+                const tgId = wd.userId;
+                const userLang = users[tgId] && users[tgId].lang ? users[tgId].lang : 'ru';
+                const finalGram = Math.max(0, (wd.amount / 1000) - 0.05).toFixed(2);
+                
+                const msgRu = `✅ Ваша заявка на вывод ${wd.amount} монет успешно обработана!\n\n💸 Сумма ${finalGram} GRAM отправлена на ваш кошелек (комиссия сети 0.05 GRAM учтена).`;
+                const msgEn = `✅ Your withdrawal request for ${wd.amount} coins has been processed successfully!\n\n💸 ${finalGram} GRAM has been sent to your wallet (0.05 GRAM network fee deducted).`;
+                const finalMsg = (userLang && !userLang.startsWith('ru')) ? msgEn : msgRu;
+                
+                bot.telegram.sendMessage(tgId, finalMsg); 
+            } catch(e){}
         }
         
         await withdrawalsRef.child(id).set(wd);
