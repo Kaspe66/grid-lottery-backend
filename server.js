@@ -1100,17 +1100,24 @@ const TONCENTER_API_KEY = process.env.TONCENTER_API_KEY;
 let processedTransactions = new Set();
 const txRef = db.ref('processed_transactions');
 
+function getSafeHash(hash) {
+    return hash.replace(/\//g, '_').replace(/\+/g, '-').replace(/=/g, '');
+}
+
 txRef.once('value').then(snap => {
     const data = snap.val();
     if (data) {
+        // Мы рекурсивно не обходим старые поломанные ключи (с `/`),
+        // просто загружаем плоские (нормальные) ключи
         processedTransactions = new Set(Object.keys(data));
         console.log(`Загружено ${processedTransactions.size} обработанных транзакций из Firebase.`);
     }
 }).catch(err => console.error('Ошибка загрузки транзакций из Firebase:', err));
 
 function markTransactionProcessed(hash) {
-    processedTransactions.add(hash);
-    txRef.child(hash).set(true).catch(e => console.error('Ошибка сохранения транзакции в Firebase:', e));
+    const safeHash = getSafeHash(hash);
+    processedTransactions.add(safeHash);
+    txRef.child(safeHash).set(true).catch(e => console.error('Ошибка сохранения транзакции в Firebase:', e));
 }
 
 let isCheckingTon = false;
@@ -1133,7 +1140,9 @@ async function checkTonTransactions() {
             // Toncenter returns transactions from newest to oldest
             for (const tx of data.result) {
                 const hash = tx.transaction_id.hash;
-                if (processedTransactions.has(hash)) {
+                const safeHash = getSafeHash(hash);
+                
+                if (processedTransactions.has(safeHash)) {
                     // We reached already processed transactions, stop iteration
                     continue; 
                 }
