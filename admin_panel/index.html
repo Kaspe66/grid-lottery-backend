@@ -6,6 +6,7 @@
     <title>GridLottery - Admin Panel</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 </head>
 <body>
     <div id="login-container" class="glass-panel">
@@ -157,8 +158,9 @@
 
             <!-- TAB: WITHDRAWALS -->
             <section id="tab-withdrawals" class="tab-content">
-                <header class="header">
+                <header class="header" style="display: flex; justify-content: space-between; align-items: center;">
                     <h2>Заявки на вывод</h2>
+                    <div id="ton-connect"></div>
                 </header>
                 <div class="glass-panel table-container">
                     <table class="data-table">

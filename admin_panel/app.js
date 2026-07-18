@@ -2,6 +2,18 @@ let adminToken = localStorage.getItem('adminToken');
 let refreshInterval = null;
 let currentEditingUserId = null;
 let allUsersData = {};
+let tonConnectUI = null;
+
+setTimeout(() => {
+    try {
+        if (typeof TON_CONNECT_UI !== 'undefined') {
+            tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+                manifestUrl: window.location.origin + '/admin_panel/tonconnect-manifest.json',
+                buttonRootId: 'ton-connect'
+            });
+        }
+    } catch(e) { console.error("TonConnect error:", e); }
+}, 1000);
 
 // DOM Elements
 const loginContainer = document.getElementById('login-container');
@@ -320,17 +332,16 @@ async function loadWithdrawals() {
             if (w.status === 'pending') {
                 const finalGram = Math.max(0, (w.amount / 1000) - 0.05);
                 const amountNano = Math.floor(finalGram * 1000000000);
-                const tonLinkWeb = `https://app.tonkeeper.com/transfer/${w.wallet}?amount=${amountNano}`;
-                const tonLinkRaw = `ton://transfer/${w.wallet}?amount=${amountNano}`;
 
                 statusHtml = '<span class="status-badge status-pending">Ожидает</span>';
                 btns = `
                     <div style="display:flex; gap:5px; margin-bottom:5px;">
-                        <a href="${tonLinkWeb}" class="btn-primary" style="text-decoration: none; padding: 5px 10px; font-size: 12px; border-radius: 6px; background-color: #3b82f6; color: white;" target="_blank">🌐 Web (Tonkeeper)</a>
-                        <a href="${tonLinkRaw}" class="btn-primary" style="text-decoration: none; padding: 5px 10px; font-size: 12px; border-radius: 6px; background-color: #2481cc; color: white;">⚡ Desktop (Telegram/Wallet)</a>
+                        <button class="btn-primary" style="background-color: #3b82f6; border:none; padding: 5px 10px; font-size: 12px; border-radius: 6px; color: white; cursor: pointer;" onclick="payWithTonConnect('${w.id}', ${amountNano}, '${w.wallet}')">🚀 Одобрить и Оплатить (TON Connect)</button>
                     </div>
-                    <button class="btn-success" onclick="processWithdrawal('${w.id}', 'approved')">Одобрить</button>
-                    <button class="btn-danger" onclick="processWithdrawal('${w.id}', 'rejected')">Отклонить</button>
+                    <div style="display:flex; gap:5px;">
+                        <button class="btn-success" onclick="processWithdrawal('${w.id}', 'approved')">Одобрить (вручную)</button>
+                        <button class="btn-danger" onclick="processWithdrawal('${w.id}', 'rejected')">Отклонить</button>
+                    </div>
                 `;
             } else if (w.status === 'approved') {
                 statusHtml = '<span class="status-badge status-active">Выплачено</span>';
@@ -352,14 +363,50 @@ async function loadWithdrawals() {
     } catch(e) {}
 }
 
-window.processWithdrawal = async function(id, status) {
-    if (!confirm(status === 'approved' ? 'Пометить как выплаченную?' : 'Отклонить заявку и вернуть монеты игроку?')) return;
-    await apiFetch('/admin/withdrawals/' + id, {
+window.payWithTonConnect = async function(wId, amountNano, walletAddress) {
+    if (!tonConnectUI) {
+        alert("TON Connect еще не загрузился!");
+        return;
+    }
+    if (!tonConnectUI.connected) {
+        alert("Сначала подключите кошелек в правом верхнем углу (Connect Wallet)!");
+        await tonConnectUI.openModal();
+        return;
+    }
+    
+    if (!confirm(`Вы собираетесь перевести ${(amountNano / 1e9).toFixed(2)} TON на адрес ${walletAddress}. Подтверждаете?`)) return;
+
+    try {
+        const transaction = {
+            validUntil: Math.floor(Date.now() / 1000) + 360,
+            messages: [
+                {
+                    address: walletAddress,
+                    amount: amountNano.toString()
+                }
+            ]
+        };
+        
+        await tonConnectUI.sendTransaction(transaction);
+        alert("Транзакция успешно отправлена в сеть! Сейчас заявка будет одобрена автоматически.");
+        await processWithdrawal(wId, 'approved', true);
+    } catch (e) {
+        console.error(e);
+        alert("Ошибка при отправке перевода: " + e.message);
+    }
+}
+
+window.processWithdrawal = async function(id, status, skipConfirm = false) {
+    if (!skipConfirm && !confirm(status === 'approved' ? 'ВНИМАНИЕ: Вы выбрали Одобрить (вручную). Вы уже перевели деньги вручную?' : 'Отклонить заявку и вернуть монеты игроку?')) return;
+    
+    try {
+        await apiFetch('/admin/withdrawals/' + id, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
     });
     loadWithdrawals();
+    } catch(e) {}
 }
 
 // --- DEPOSITS ---
