@@ -33,6 +33,8 @@ app.use(express.json());
 app.get('/admin/tonconnect-manifest.json', (req, res) => {
     const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
     const host = req.get('host');
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', '*');
     res.json({
         "url": `${protocol}://${host}`,
         "name": "GridLottery Admin",
