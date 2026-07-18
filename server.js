@@ -89,7 +89,7 @@ bot.start((ctx) => {
         users[tgIdStr] = createUserObject(50);
     }
     users[tgIdStr].lang = lang || 'ru';
-    saveUsers();
+    saveUser(tgIdStr);
 });
 bot.launch();
 
@@ -202,6 +202,18 @@ usersRef.once('value')
 
 function saveUsers() {
     usersRef.set(users).catch(err => console.error('Ошибка сохранения БД:', err));
+}
+
+function saveUser(tgId) {
+    if (users[tgId]) {
+        usersRef.child(tgId).set(users[tgId]).catch(err => console.error('Ошибка сохранения юзера:', err));
+    }
+}
+
+function saveSystem() {
+    if (users['_SYSTEM_']) {
+        usersRef.child('_SYSTEM_').set(users['_SYSTEM_']).catch(err => console.error('Ошибка сохранения SYSTEM:', err));
+    }
 }
 
 function getColorForId(id) {
@@ -419,7 +431,10 @@ function finishRoulette(room, winningIndex) {
             addEvent('WIN', `Игрок ${winnerData.username || winnerData.first_name} сорвал куш в ${winAmountTotal} монет в ${room.name}!`);
         }
         
-        saveUsers();
+        saveSystem();
+        if (winnerData.telegram_id) {
+            saveUser(winnerData.telegram_id);
+        }
         io.emit('users_update', users);
 
         room.winnerHistory.unshift({
@@ -438,7 +453,7 @@ function finishRoulette(room, winningIndex) {
             if (!users['_SYSTEM_']) users['_SYSTEM_'] = { commission_balance: 0, commission_bonus: 0 };
             users['_SYSTEM_'].commission_balance = (users['_SYSTEM_'].commission_balance || 0) + (room.bank_real || 0);
             users['_SYSTEM_'].commission_bonus = (users['_SYSTEM_'].commission_bonus || 0) + (room.bank_bonus || 0);
-            saveUsers();
+            saveSystem();
         }
     }
     
@@ -773,7 +788,7 @@ io.on('connection', (socket) => {
 
         if (!users[tgId]) {
             users[tgId] = createUserObject(50);
-            saveUsers();
+            saveUser(tgId);
         }
         
         userSockets.set(tgId, socket);
@@ -865,6 +880,7 @@ io.on('connection', (socket) => {
                         users[tgId].referredBy = referrerId;
                         users[referrerId].balance_bonus += gameSettings.referralBonus;
                         users[referrerId].referralsCount++;
+                        saveUser(referrerId);
                     }
                 }
             }
@@ -873,7 +889,7 @@ io.on('connection', (socket) => {
         // Обновляем публичные данные
         users[tgId].name = socket.userData.username;
         users[tgId].photo_url = socket.userData.photo_url;
-        saveUsers();
+        saveUser(tgId);
 
         room.players.add(socket.id);
         room.playersData.set(socket.id, socket.userData);
@@ -950,7 +966,7 @@ io.on('connection', (socket) => {
             
             userRecord.stats.totalSpent += price;
             room.bank += price;           
-            saveUsers();
+            saveUser(tgId);
             
             room.gameState[index] = {
                 username: socket.userData.username,
@@ -979,7 +995,7 @@ io.on('connection', (socket) => {
         if (now - lastClaim >= cooldown) {
             userRecord.balance_bonus += gameSettings.dailyBonus;
             userRecord.lastBonusClaim = now;
-            saveUsers();
+            saveUser(tgId);
             io.emit('users_update', users);
             socket.emit('daily_bonus_success', 'daily_bonus_success');
         } else {
@@ -997,7 +1013,7 @@ io.on('connection', (socket) => {
         if ((userRecord.balance_bonus || 0) >= 10000) {
             userRecord.balance_bonus -= 10000;
             userRecord.balance_real = (userRecord.balance_real || 0) + 10;
-            saveUsers();
+            saveUser(tgId);
             io.emit('users_update', users);
             socket.emit('exchange_success', 'exchange_success');
         } else {
@@ -1037,7 +1053,7 @@ io.on('connection', (socket) => {
         
         userRecord.balance_real -= amount;
         userRecord.balance_locked = (userRecord.balance_locked || 0) + amount;
-        saveUsers();
+        saveUser(tgId);
         io.emit('users_update', users);
         
         const withdrawId = `wd_${Date.now()}_${tgId}`;
@@ -1187,7 +1203,7 @@ async function checkTonTransactions() {
                             users[tgId].balance_real += amountInCoins;
                             users[tgId].hasDeposited = true;
                             console.log(`Успешное пополнение: Игрок ${tgId} получил ${amountInCoins} монет за ${value} nanoGram.`);
-                            saveUsers();
+                            saveUser(tgId);
                             io.emit('users_update', users);
                             
                             addEvent('DEPOSIT', `Игрок ${users[tgId].name} пополнил счет на ${amountInCoins} реальных монет`);
@@ -1225,7 +1241,7 @@ setInterval(checkTonTransactions, 15000); // проверяем каждые 15 
 // ==========================================
 // ADMIN API
 // ==========================================
-const ADMIN_PASSWORD = 'Admin2026';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin2026';
 
 app.post('/admin/login', (req, res) => {
     if (req.body.password === ADMIN_PASSWORD) {
@@ -1304,7 +1320,7 @@ app.post('/admin/users/:id', requireAdmin, (req, res) => {
     if (req.body.balance_bonus !== undefined) users[tgId].balance_bonus = Number(req.body.balance_bonus);
     if (req.body.banned !== undefined) users[tgId].banned = !!req.body.banned;
     
-    saveUsers();
+    saveUser(tgId);
     io.emit('users_update', users);
     res.json({ success: true, user: users[tgId] });
 });
@@ -1366,7 +1382,7 @@ app.post('/admin/withdrawals/:id', requireAdmin, async (req, res) => {
                 users[tgId].balance_locked = (users[tgId].balance_locked || 0) - wd.amount;
                 if (users[tgId].balance_locked < 0) users[tgId].balance_locked = 0;
                 users[tgId].balance_real += wd.amount;
-                saveUsers();
+                saveUser(tgId);
                 io.emit('users_update', users);
                 try { 
                     const userLang = users[tgId] && users[tgId].lang ? users[tgId].lang : 'ru';
@@ -1381,7 +1397,7 @@ app.post('/admin/withdrawals/:id', requireAdmin, async (req, res) => {
             if (users[tgId]) {
                 users[tgId].balance_locked = (users[tgId].balance_locked || 0) - wd.amount;
                 if (users[tgId].balance_locked < 0) users[tgId].balance_locked = 0;
-                saveUsers();
+                saveUser(tgId);
                 io.emit('users_update', users);
             }
             try { 
