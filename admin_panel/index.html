@@ -294,6 +294,30 @@
                     <span class="slider"></span>
                 </label>
             </div>
+            
+            <div id="user-details-section" class="hidden">
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
+                <h4>📊 Статистика игры</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; font-size: 14px;">
+                    <div>Сыграно игр: <b id="stat-games">0</b></div>
+                    <div>Выиграно: <b id="stat-wins">0</b></div>
+                    <div>Сумма ставок: <b id="stat-spent">0</b></div>
+                    <div>Сумма выигрышей: <b id="stat-won">0</b></div>
+                </div>
+
+                <h4>💸 Финансовая история</h4>
+                <div style="font-size: 14px; margin-bottom: 10px;">
+                    Всего пополнений: <b id="stat-deposits-total">0</b> монет<br>
+                    Всего выводов: <b id="stat-withdrawals-total">0</b> монет
+                </div>
+                
+                <div class="table-container" style="max-height: 150px; margin-bottom: 10px; overflow-y: auto;">
+                    <table class="data-table" style="font-size: 12px;">
+                        <thead><tr><th>Тип</th><th>Сумма</th><th>Дата</th></tr></thead>
+                        <tbody id="user-finance-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
             <div class="modal-actions">
                 <button id="modal-save" class="btn-success">Сохранить</button>
                 <button id="modal-close" class="btn-cancel">Отмена</button>

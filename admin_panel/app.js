@@ -222,13 +222,68 @@ function renderLeadersTable() {
     });
 }
 
-function editUser(id) {
+window.editUser = async function(id) {
     currentEditingUserId = id;
     const u = allUsersData[id];
     document.getElementById('modal-real').value = u.balance_real || 0;
     document.getElementById('modal-bonus').value = u.balance_bonus || 0;
     document.getElementById('modal-banned').checked = !!u.banned;
+    
+    document.getElementById('user-details-section').classList.add('hidden');
+    document.getElementById('user-finance-tbody').innerHTML = '<tr><td colspan="3" style="text-align:center;">Загрузка...</td></tr>';
     document.getElementById('user-modal').classList.remove('hidden');
+    
+    try {
+        const res = await apiFetch('/admin/users/' + id + '/details');
+        if (res.success && res.details) {
+            const { stats, deposits, withdrawals } = res.details;
+            
+            document.getElementById('stat-games').innerText = stats.gamesPlayed || 0;
+            document.getElementById('stat-wins').innerText = stats.wins || 0;
+            document.getElementById('stat-spent').innerText = Math.floor(stats.totalSpent || 0);
+            document.getElementById('stat-won').innerText = Math.floor(stats.totalWon || 0);
+            
+            let totalDep = 0;
+            let totalWd = 0;
+            const financeRecords = [];
+            
+            deposits.forEach(d => {
+                totalDep += (d.amount || 0);
+                financeRecords.push({ type: 'Пополнение', amount: d.amount, time: d.time, color: '#10b981' });
+            });
+            
+            withdrawals.forEach(w => {
+                if (w.status === 'approved') {
+                    totalWd += (w.amount || 0);
+                }
+                financeRecords.push({ type: `Вывод (${w.status})`, amount: w.amount, time: w.timestamp, color: w.status === 'approved' ? '#f59e0b' : (w.status === 'rejected' ? '#ef4444' : '#6b7280') });
+            });
+            
+            document.getElementById('stat-deposits-total').innerText = Math.floor(totalDep);
+            document.getElementById('stat-withdrawals-total').innerText = Math.floor(totalWd);
+            
+            financeRecords.sort((a, b) => b.time - a.time);
+            
+            const tbody = document.getElementById('user-finance-tbody');
+            tbody.innerHTML = '';
+            if (financeRecords.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Нет транзакций</td></tr>';
+            } else {
+                financeRecords.forEach(r => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="color:${r.color}">${r.type}</td>
+                        <td><b>${r.amount}</b></td>
+                        <td>${new Date(r.time).toLocaleString()}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            document.getElementById('user-details-section').classList.remove('hidden');
+        }
+    } catch(e) {
+        console.error("Failed to load user details", e);
+    }
 }
 
 document.getElementById('modal-close').addEventListener('click', () => {

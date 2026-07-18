@@ -1286,6 +1286,34 @@ app.post('/admin/users/:id', requireAdmin, (req, res) => {
     res.json({ success: true, user: users[tgId] });
 });
 
+app.get('/admin/users/:id/details', requireAdmin, async (req, res) => {
+    const tgId = req.params.id;
+    if (!users[tgId]) return res.status(404).json({ success: false, message: 'User not found' });
+    
+    const stats = users[tgId].stats || {};
+    const userDeposits = Object.values(allDeposits).filter(d => d.tgId === tgId).sort((a, b) => b.time - a.time);
+    
+    let userWithdrawals = [];
+    try {
+        let snap = await withdrawalsRef.orderByChild('userId').equalTo(tgId).once('value');
+        let data = snap.val();
+        if (data) {
+            userWithdrawals = Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
+        }
+    } catch (e) {
+        console.error("Error fetching withdrawals for user", e);
+    }
+    
+    res.json({
+        success: true,
+        details: {
+            stats,
+            deposits: userDeposits,
+            withdrawals: userWithdrawals
+        }
+    });
+});
+
 app.get('/admin/withdrawals', requireAdmin, async (req, res) => {
     try {
         let snap = await withdrawalsRef.once('value');
