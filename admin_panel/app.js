@@ -8,7 +8,7 @@ setTimeout(() => {
     try {
         if (typeof TON_CONNECT_UI !== 'undefined') {
             tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-                manifestUrl: window.location.origin + '/admin_panel/tonconnect-manifest.json',
+                manifestUrl: window.location.origin + '/admin/tonconnect-manifest.json',
                 buttonRootId: 'ton-connect'
             });
         }
