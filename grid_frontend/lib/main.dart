@@ -774,7 +774,7 @@ class _MainScreenState extends State<MainScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.monetization_on, color: Colors.amber, size: 28),
+                      const Icon(Icons.monetization_on, color: Colors.blue, size: 28),
                       const SizedBox(width: 8),
                       Text(AppTranslations.t('plus_10_bonus_coins'), style: const TextStyle(color: Colors.white70, fontSize: 16)),
                     ],
