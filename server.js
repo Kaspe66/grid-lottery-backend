@@ -1073,6 +1073,24 @@ io.on('connection', (socket) => {
             console.error('Ошибка создания вывода', err);
             socket.emit('withdrawal_error', 'error_server_withdrawal');
         });
+
+
+    socket.on('get_referrals', (callback) => {
+        if (!socket.userData || !socket.userData.telegram_id) {
+            if (callback) callback({ success: false, message: 'Not authenticated' });
+            return;
+        }
+        const tgId = socket.userData.telegram_id;
+        const myReferrals = [];
+        for (let id in users) {
+            if (users[id].referredBy === tgId) {
+                myReferrals.push({
+                    name: users[id].name || 'User',
+                    photo_url: users[id].photo_url || ''
+                });
+            }
+        }
+        if (callback) callback({ success: true, referrals: myReferrals });
     });
 
     socket.on('disconnect', () => {

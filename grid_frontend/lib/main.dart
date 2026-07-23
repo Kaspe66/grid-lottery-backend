@@ -88,7 +88,8 @@ class AppTranslations {
       'withdrawal_success': 'Withdrawal request created successfully',
       'error_multiple_devices': 'Logged in from another device',
       'exchange_btn_1': 'Exchange 10000 ',
-      'exchange_btn_2': ' for 10 '
+      'exchange_btn_2': ' for 10 ',
+      'my_referrals': 'My Referrals'
     },
     'ru': {
       'room_selection': 'ВЫБОР КОМНАТЫ',
@@ -163,7 +164,8 @@ class AppTranslations {
       'withdrawal_success': 'Заявка на вывод успешно создана',
       'error_multiple_devices': 'Выполнен вход с другого устройства',
       'exchange_btn_1': 'Обменять 10000 ',
-      'exchange_btn_2': ' на 10 '
+      'exchange_btn_2': ' на 10 ',
+      'my_referrals': 'Мои рефералы'
     }
   };
 
@@ -946,6 +948,47 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  void _showReferralsBottomSheet() {
+    socket.emitWithAck('get_referrals', {}, ack: (response) {
+      if (response != null && response['success'] == true) {
+        List<dynamic> referrals = response['referrals'];
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: const Color(0xFF1E1E2C),
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          builder: (context) {
+            return Column(
+              children: [
+                const SizedBox(height: 16),
+                Text(AppTranslations.t('my_referrals'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                const Divider(color: Colors.white24),
+                Expanded(
+                  child: referrals.isEmpty 
+                    ? const Center(child: Text('Нет рефералов', style: TextStyle(color: Colors.white54)))
+                    : ListView.builder(
+                        itemCount: referrals.length,
+                        itemBuilder: (context, index) {
+                          var ref = referrals[index];
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundImage: ref['photo_url'] != null && ref['photo_url'].isNotEmpty
+                                  ? NetworkImage('$backendUrl/avatar?url=${Uri.encodeComponent(ref['photo_url'])}')
+                                  : null,
+                              child: ref['photo_url'] == null || ref['photo_url'].isEmpty ? const Icon(Icons.person) : null,
+                            ),
+                            title: Text(ref['name'] ?? 'User', style: const TextStyle(color: Colors.white)),
+                          );
+                        },
+                      ),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    });
+  }
+
   Widget _buildProfile() {
     var myData = users[_myTelegramId];
     if (myData == null) return const Center(child: CircularProgressIndicator());
@@ -1052,6 +1095,23 @@ class _MainScreenState extends State<MainScreen> {
           ListTile(
             title: Text(AppTranslations.t('games_played')),
             trailing: Text('${stats['gamesPlayed'] ?? 0}', style: const TextStyle(fontSize: 18)),
+          ),
+          ListTile(
+            title: Text(AppTranslations.t('my_referrals')),
+            trailing: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(color: Colors.blueAccent, shape: BoxShape.circle),
+              child: Text('${myData['referralsCount'] ?? 0}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+            onTap: () {
+              if ((myData['referralsCount'] ?? 0) > 0) {
+                _showReferralsBottomSheet();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('У вас пока нет рефералов')),
+                );
+              }
+            },
           ),
           ListTile(
             title: Text(AppTranslations.t('total_won_real')),
