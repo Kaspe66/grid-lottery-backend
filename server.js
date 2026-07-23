@@ -88,6 +88,23 @@ bot.start((ctx) => {
     if (!users[tgIdStr]) {
         users[tgIdStr] = createUserObject(100);
     }
+    
+    // Обработка рефералов на этапе /start (самый надежный способ)
+    const payload = ctx.payload;
+    if (payload && payload.startsWith('ref_') && !users[tgIdStr].referredBy) {
+        const referrerId = payload.split('_')[1];
+        if (users[referrerId] && referrerId !== tgIdStr) {
+            users[tgIdStr].referredBy = referrerId;
+            users[referrerId].balance_bonus += gameSettings.referralBonus;
+            if (users[referrerId].referralsCount === undefined) users[referrerId].referralsCount = 0;
+            users[referrerId].referralsCount++;
+            saveUser(referrerId);
+            console.log(`[DEBUG BOT] Реферал ${tgIdStr} успешно привязан к ${referrerId}`);
+            
+            ctx.reply(`🎉 Вы присоединились по приглашению! Вы получили стартовый бонус, а ваш друг — ${gameSettings.referralBonus} монет.`).catch(e=>console.log(e));
+        }
+    }
+
     users[tgIdStr].lang = lang || 'ru';
     saveUser(tgIdStr);
 });
@@ -872,7 +889,7 @@ io.on('connection', (socket) => {
         }
             
         // Проверка рефералов (даже если юзер был создан ботом при клике /start доли секунды назад)
-        if (userData.initData && !users[tgId].referredBy && users[tgId].stats.gamesPlayed === 0 && !users[tgId].hasDeposited) {
+        if (userData.initData && !users[tgId].referredBy && users[tgId].stats?.gamesPlayed === 0 && !users[tgId].hasDeposited) {
             const urlParams = new URLSearchParams(userData.initData);
             const startParam = urlParams.get('start_param');
             if (startParam && startParam.startsWith('ref_')) {
@@ -880,6 +897,7 @@ io.on('connection', (socket) => {
                 if (users[referrerId] && referrerId !== tgId) {
                     users[tgId].referredBy = referrerId;
                     users[referrerId].balance_bonus += gameSettings.referralBonus;
+                    if (users[referrerId].referralsCount === undefined) users[referrerId].referralsCount = 0;
                     users[referrerId].referralsCount++;
                     saveUser(referrerId);
                 }
