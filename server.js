@@ -1110,9 +1110,9 @@ io.on('connection', (socket) => {
         });
     });
 
-    socket.on('get_referrals', (callback) => {
+    socket.on('get_referrals', (data, callback) => {
         if (!socket.userData || !socket.userData.telegram_id) {
-            if (callback) callback({ success: false, message: 'Not authenticated' });
+            if (typeof callback === 'function') callback({ success: false, message: 'Not authenticated' });
             return;
         }
         const tgId = socket.userData.telegram_id;
@@ -1120,12 +1120,12 @@ io.on('connection', (socket) => {
         for (let id in users) {
             if (users[id].referredBy === tgId) {
                 myReferrals.push({
-                    name: users[id].name || 'User',
+                    name: users[id].username || users[id].first_name || 'User',
                     photo_url: users[id].photo_url || ''
                 });
             }
         }
-        if (callback) callback({ success: true, referrals: myReferrals });
+        if (typeof callback === 'function') callback({ success: true, referrals: myReferrals });
     });
 
     socket.on('disconnect', () => {
