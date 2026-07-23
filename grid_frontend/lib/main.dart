@@ -791,7 +791,7 @@ class _MainScreenState extends State<MainScreen> {
             icon: const Icon(Icons.share, color: Colors.blueAccent),
             label: const Text('Share Link', style: TextStyle(fontSize: 18)),
             onPressed: () {
-               String botUrl = 'https://t.me/GridLottery_bot/app?startapp=ref_$_myTelegramId';
+               String botUrl = 'https://t.me/GridLottery_bot?start=ref_$_myTelegramId';
                String text = AppTranslations.langCode == 'ru' ? 'Присоединяйся к игре и получи 50 монет!' : 'Join the game and get 50 coins!';
                String encodedBotUrl = Uri.encodeComponent(botUrl);
                String encodedText = Uri.encodeComponent(text);
