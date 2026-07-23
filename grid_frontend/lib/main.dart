@@ -89,7 +89,13 @@ class AppTranslations {
       'error_multiple_devices': 'Logged in from another device',
       'exchange_btn_1': 'Exchange 10000 ',
       'exchange_btn_2': ' for 10 ',
-      'my_referrals': 'My Referrals'
+      'my_referrals': 'My Referrals',
+      'sort': 'Sort',
+      'plus_10_bonus_coins': '+10 Bonus Coins',
+      'share_text': 'Join the game and get 50 coins!',
+      'no_referrals': 'No referrals',
+      'pending_withdrawals': 'Pending withdrawals:',
+      'no_referrals_yet': 'You have no referrals yet'
     },
     'ru': {
       'room_selection': 'ВЫБОР КОМНАТЫ',
@@ -165,7 +171,13 @@ class AppTranslations {
       'error_multiple_devices': 'Выполнен вход с другого устройства',
       'exchange_btn_1': 'Обменять 10000 ',
       'exchange_btn_2': ' на 10 ',
-      'my_referrals': 'Мои рефералы'
+      'my_referrals': 'Мои рефералы',
+      'sort': 'Сортировка',
+      'plus_10_bonus_coins': '+10 Бонусных Монет',
+      'share_text': 'Присоединяйся к игре и получи 50 монет!',
+      'no_referrals': 'Нет рефералов',
+      'pending_withdrawals': 'На подтверждении на вывод:',
+      'no_referrals_yet': 'У вас пока нет рефералов'
     }
   };
 
@@ -546,7 +558,7 @@ class _MainScreenState extends State<MainScreen> {
                     _sortRoomsAscending = !_sortRoomsAscending;
                   });
                 },
-                tooltip: 'Сортировка',
+                tooltip: AppTranslations.t('sort'),
               ),
             ],
           ),
@@ -759,7 +771,14 @@ class _MainScreenState extends State<MainScreen> {
                   const SizedBox(height: 16),
                   Text(AppTranslations.t('daily_bonus'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  const Text('+10 Бонусных Монет', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.monetization_on, color: Colors.amber, size: 28),
+                      const SizedBox(width: 8),
+                      Text(AppTranslations.t('plus_10_bonus_coins'), style: const TextStyle(color: Colors.white70, fontSize: 16)),
+                    ],
+                  ),
                   const SizedBox(height: 24),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -792,7 +811,7 @@ class _MainScreenState extends State<MainScreen> {
             label: const Text('Share Link', style: TextStyle(fontSize: 18)),
             onPressed: () {
                String botUrl = 'https://t.me/GridLottery_bot?start=ref_$_myTelegramId';
-               String text = AppTranslations.langCode == 'ru' ? 'Присоединяйся к игре и получи 50 монет!' : 'Join the game and get 50 coins!';
+               String text = AppTranslations.t('share_text');
                String encodedBotUrl = Uri.encodeComponent(botUrl);
                String encodedText = Uri.encodeComponent(text);
                String shareUrl = 'https://t.me/share/url?url=$encodedBotUrl&text=$encodedText';
@@ -964,7 +983,7 @@ class _MainScreenState extends State<MainScreen> {
                 const Divider(color: Colors.white24),
                 Expanded(
                   child: referrals.isEmpty 
-                    ? const Center(child: Text('Нет рефералов', style: TextStyle(color: Colors.white54)))
+                    ? Center(child: Text(AppTranslations.t('no_referrals'), style: const TextStyle(color: Colors.white54)))
                     : ListView.builder(
                         itemCount: referrals.length,
                         itemBuilder: (context, index) {
@@ -1036,7 +1055,7 @@ class _MainScreenState extends State<MainScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('На подтверждении на вывод:', style: TextStyle(fontSize: 14, color: Colors.amber)),
+                        Text(AppTranslations.t('pending_withdrawals'), style: const TextStyle(fontSize: 14, color: Colors.amber)),
                         Row(
                           children: [
                             const Icon(Icons.lock_clock, color: Colors.amber, size: 20),
@@ -1108,7 +1127,7 @@ class _MainScreenState extends State<MainScreen> {
                 _showReferralsBottomSheet();
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('У вас пока нет рефералов')),
+                  SnackBar(content: Text(AppTranslations.t('no_referrals_yet'))),
                 );
               }
             },

@@ -99,7 +99,11 @@ bot.start((ctx) => {
             if (users[referrerId].referralsCount === undefined) users[referrerId].referralsCount = 0;
             users[referrerId].referralsCount++;
             saveUser(referrerId);
-            ctx.reply(`🎉 Вы присоединились по приглашению! Вы получили стартовый бонус, а ваш друг — ${gameSettings.referralBonus} монет.`).catch(e=>console.log(e));
+            const userLang = lang || 'ru';
+            const msgRu = `🎉 Вы присоединились по приглашению! Вы получили стартовый бонус, а ваш друг — ${gameSettings.referralBonus} монет.`;
+            const msgEn = `🎉 You joined via invitation! You received a starter bonus, and your friend got ${gameSettings.referralBonus} coins.`;
+            const finalMsg = (!userLang.startsWith('ru')) ? msgEn : msgRu;
+            ctx.reply(finalMsg).catch(e=>console.log(e));
         }
     }
 
@@ -833,7 +837,7 @@ io.on('connection', (socket) => {
 
     socket.on('join_room', (data, callback) => {
         if (maintenanceMode) {
-            if (callback) callback({ success: false, message: 'Сервер на тех. обслуживании. Возвращайтесь позже!' });
+            if (callback) callback({ success: false, message: 'error_maintenance' });
             return;
         }
         
@@ -872,7 +876,7 @@ io.on('connection', (socket) => {
         
         const isValid = validateInitData(userData.initData, token);
         if (!isValid) {
-            if (callback) callback({ success: false, message: 'Ошибка подписи Telegram (Взлом)' });
+            if (callback) callback({ success: false, message: 'error_signature' });
             return;
         }
 
