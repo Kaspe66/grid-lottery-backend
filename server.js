@@ -807,6 +807,29 @@ io.on('connection', (socket) => {
             users[tgId] = createUserObject(100);
             saveUser(tgId);
         }
+
+        // --- ВАЖНО: Обработка рефералов при аутентификации ---
+        console.log(`[DEBUG AUTH] Start referral check for tgId=${tgId}. gamesPlayed=${users[tgId].stats?.gamesPlayed}, hasDeposited=${users[tgId].hasDeposited}, referredBy=${users[tgId].referredBy}`);
+        if (userData.initData && !users[tgId].referredBy && users[tgId].stats?.gamesPlayed === 0 && !users[tgId].hasDeposited) {
+            const urlParams = new URLSearchParams(userData.initData);
+            const startParam = urlParams.get('start_param');
+            console.log(`[DEBUG AUTH] start_param = ${startParam}`);
+            
+            if (startParam && startParam.startsWith('ref_')) {
+                const referrerId = startParam.split('_')[1];
+                console.log(`[DEBUG AUTH] referrerId = ${referrerId}, exists in users = ${!!users[referrerId]}, is_self = ${referrerId === tgId}`);
+                
+                if (users[referrerId] && referrerId !== tgId) {
+                    users[tgId].referredBy = referrerId;
+                    users[referrerId].balance_bonus += gameSettings.referralBonus;
+                    if (users[referrerId].referralsCount === undefined) users[referrerId].referralsCount = 0;
+                    users[referrerId].referralsCount++;
+                    saveUser(referrerId);
+                    saveUser(tgId); // Сохраняем и самого реферала, чтобы referredBy записался
+                    console.log(`[DEBUG AUTH] УСПЕХ! Игрок ${tgId} стал рефералом ${referrerId}`);
+                }
+            }
+        }
         
         userSockets.set(tgId, socket);
 
