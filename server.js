@@ -86,7 +86,7 @@ bot.start((ctx) => {
 
     const tgIdStr = String(userId);
     if (!users[tgIdStr]) {
-        users[tgIdStr] = createUserObject(50);
+        users[tgIdStr] = createUserObject(100);
     }
     users[tgIdStr].lang = lang || 'ru';
     saveUser(tgIdStr);
@@ -141,7 +141,7 @@ function saveDeposits() {
     depositsRef.set(allDeposits).catch(e => console.error(e));
 }
 
-function createUserObject(balance = 50) {
+function createUserObject(balance = 100) {
     return {
         balance_real: 0,
         balance_bonus: balance,
@@ -417,7 +417,7 @@ function finishRoulette(room, winningIndex) {
                 users[winnerData.telegram_id].stats.totalWonReal = (users[winnerData.telegram_id].stats.totalWonReal || 0) + winAmountReal;
                 users[winnerData.telegram_id].stats.totalWonBonus = (users[winnerData.telegram_id].stats.totalWonBonus || 0) + winAmountBonus;
             } else {
-                users[winnerData.telegram_id] = createUserObject(50);
+                users[winnerData.telegram_id] = createUserObject(100);
                 users[winnerData.telegram_id].balance_real += winAmountReal;
                 users[winnerData.telegram_id].balance_bonus += winAmountBonus;
                 users[winnerData.telegram_id].stats.wins++;
@@ -787,7 +787,7 @@ io.on('connection', (socket) => {
         };
 
         if (!users[tgId]) {
-            users[tgId] = createUserObject(50);
+            users[tgId] = createUserObject(100);
             saveUser(tgId);
         }
         
@@ -868,7 +868,7 @@ io.on('connection', (socket) => {
         socket.roomId = roomId;
 
         if (users[tgId] === undefined) {
-            users[tgId] = createUserObject(50);
+            users[tgId] = createUserObject(100);
         }
             
         // Проверка рефералов (даже если юзер был создан ботом при клике /start доли секунды назад)
@@ -1198,7 +1198,7 @@ async function checkTonTransactions() {
                         
                         if (amountInCoins > 0) {
                             if (!users[tgId]) {
-                                users[tgId] = createUserObject(50);
+                                users[tgId] = createUserObject(100);
                             }
                             users[tgId].balance_real += amountInCoins;
                             users[tgId].hasDeposited = true;
