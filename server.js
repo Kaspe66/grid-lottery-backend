@@ -1073,7 +1073,7 @@ io.on('connection', (socket) => {
             console.error('Ошибка создания вывода', err);
             socket.emit('withdrawal_error', 'error_server_withdrawal');
         });
-
+    });
 
     socket.on('get_referrals', (callback) => {
         if (!socket.userData || !socket.userData.telegram_id) {
