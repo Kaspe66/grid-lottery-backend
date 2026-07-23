@@ -869,19 +869,19 @@ io.on('connection', (socket) => {
 
         if (users[tgId] === undefined) {
             users[tgId] = createUserObject(50);
+        }
             
-            // Проверка рефералов
-            if (userData.initData) {
-                const urlParams = new URLSearchParams(userData.initData);
-                const startParam = urlParams.get('start_param');
-                if (startParam && startParam.startsWith('ref_')) {
-                    const referrerId = startParam.split('_')[1];
-                    if (users[referrerId] && referrerId !== tgId) {
-                        users[tgId].referredBy = referrerId;
-                        users[referrerId].balance_bonus += gameSettings.referralBonus;
-                        users[referrerId].referralsCount++;
-                        saveUser(referrerId);
-                    }
+        // Проверка рефералов (даже если юзер был создан ботом при клике /start доли секунды назад)
+        if (userData.initData && !users[tgId].referredBy && users[tgId].stats.gamesPlayed === 0 && !users[tgId].hasDeposited) {
+            const urlParams = new URLSearchParams(userData.initData);
+            const startParam = urlParams.get('start_param');
+            if (startParam && startParam.startsWith('ref_')) {
+                const referrerId = startParam.split('_')[1];
+                if (users[referrerId] && referrerId !== tgId) {
+                    users[tgId].referredBy = referrerId;
+                    users[referrerId].balance_bonus += gameSettings.referralBonus;
+                    users[referrerId].referralsCount++;
+                    saveUser(referrerId);
                 }
             }
         }
