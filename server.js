@@ -117,6 +117,7 @@ const ROULETTE_TIME = 8;
 const REWARD_TIME = 5;   
 
 let maintenanceMode = false;
+let maintenanceCheckInterval = null;
 let onlineSockets = new Set();
 let userSockets = new Map();
 
@@ -1498,6 +1499,30 @@ app.get('/admin/deposits', requireAdmin, (req, res) => {
 
 app.post('/admin/maintenance', requireAdmin, (req, res) => {
     maintenanceMode = !!req.body.active;
+    
+    if (maintenanceMode) {
+        if (!maintenanceCheckInterval) {
+            maintenanceCheckInterval = setInterval(() => {
+                const allWaiting = rooms.every(r => r.gamePhase === 'WAITING');
+                if (allWaiting) {
+                    clearInterval(maintenanceCheckInterval);
+                    maintenanceCheckInterval = null;
+                    
+                    // Disconnect all connected players so they see the maintenance screen
+                    for (const socket of userSockets.values()) {
+                        socket.emit('error', 'error_maintenance');
+                        socket.disconnect(true);
+                    }
+                }
+            }, 1000);
+        }
+    } else {
+        if (maintenanceCheckInterval) {
+            clearInterval(maintenanceCheckInterval);
+            maintenanceCheckInterval = null;
+        }
+    }
+    
     res.json({ success: true, maintenance: maintenanceMode });
 });
 
