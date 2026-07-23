@@ -538,7 +538,7 @@ for (let i = 1; i <= 20; i++) {
 }
 
 function botLogic() {
-    if (!gameSettings.botsEnabled) {
+    if (!gameSettings.botsEnabled || maintenanceMode) {
         BOTS.forEach(bot => {
             if (bot.currentRoom) {
                 const room = getRoom(bot.currentRoom);
