@@ -110,6 +110,17 @@ bot.start((ctx) => {
     users[tgIdStr].lang = lang || 'ru';
     saveUser(tgIdStr);
 });
+
+bot.command('rules', (ctx) => {
+    const lang = ctx.from.language_code;
+    const isRu = !lang || lang.startsWith('ru');
+    const url = 'https://telegra.ph/GridLottery--Terms-of-Service--Privacy-Policy-07-26';
+    const msg = isRu 
+        ? `Правила и описание приложения доступны по ссылке:\n[Описание приложения](${url})`
+        : `Rules and application description are available here:\n[App Description](${url})`;
+    ctx.replyWithMarkdown(msg).catch(e => console.log(e));
+});
+
 bot.launch();
 
 const BETTING_TIME = 60; 
