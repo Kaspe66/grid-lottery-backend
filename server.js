@@ -121,6 +121,11 @@ bot.command('rules', (ctx) => {
     ctx.replyWithMarkdown(msg).catch(e => console.log(e));
 });
 
+bot.telegram.setMyCommands([
+    { command: 'start', description: 'Запустить бота / Открыть игру' },
+    { command: 'rules', description: 'Правила и описание' }
+]).catch(e => console.log('Error setting commands:', e));
+
 bot.launch();
 
 const BETTING_TIME = 60; 
