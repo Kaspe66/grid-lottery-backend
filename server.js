@@ -65,14 +65,14 @@ app.get('/avatar', async (req, res) => {
 bot.start((ctx) => {
     const userId = ctx.from.id;
     const lang = ctx.from.language_code;
-    let menuText = 'Играть 💎';
-    let msgText = '💎 <b>Добро пожаловать в Grid Lottery!</b>\n\nWeb3 игра на блокчейне <b>The Open Network (TON)</b> с использованием токена <b>GRAM</b>!\n\n🎲 Выбирай ячейки на сетке 10х10, делай ставки в GRAM (TON) или бонусных монетах и забирай джекпот!\n🔗 Поддержка TON Connect 2.0 для мгновенных пополнений и выводов.\n\n👥 Приглашай друзей и получай 50 монет за каждого!\nТвоя ссылка:\nhttps://t.me/GridLottery_bot?start=ref_' + userId + '\n\nНажми кнопку ниже, чтобы запустить игру:';
-    let btnText = '💎 Играть на TON';
+    let menuText = 'Играть 🎮';
+    let msgText = '💎 <b>Добро пожаловать в Grid Lottery!</b>\n\nМногопользовательская Web3-игра на блокчейне <b>The Open Network (TON)</b>!\n\n🎲 Выбирай ячейки на сетке 10х10, делай ставки в монетах или бонусах и срывай банк в рулетке!\n🔗 Поддержка TON Connect 2.0 для мгновенных пополнений и выводов.\n\n👥 Приглашай друзей и получай 50 бонусных монет за каждого!\nТвоя реферальная ссылка:\nhttps://t.me/GridLottery_bot?start=ref_' + userId + '\n\nНажми кнопку ниже, чтобы запустить игру:';
+    let btnText = '🎮 Играть в Grid Lottery';
 
     if (lang && !lang.startsWith('ru')) {
-        menuText = 'Play 💎';
-        msgText = '💎 <b>Welcome to Grid Lottery!</b>\n\nWeb3 game on <b>The Open Network (TON)</b> powered by <b>GRAM token</b>!\n\n🎲 Choose cells on a 10x10 grid, place bets in GRAM (TON) or bonus coins, and win the jackpot!\n🔗 Built-in TON Connect 2.0 for instant deposits and withdrawals.\n\n👥 Invite friends and get 50 coins for each!\nYour link:\nhttps://t.me/GridLottery_bot?start=ref_' + userId + '\n\nClick the button below to launch the game:';
-        btnText = '💎 Play on TON';
+        menuText = 'Play 🎮';
+        msgText = '💎 <b>Welcome to Grid Lottery!</b>\n\nMultiplayer Web3 game on <b>The Open Network (TON)</b>!\n\n🎲 Choose cells on a 10x10 grid, place bets in coins or bonus funds, and win the jackpot!\n🔗 Built-in TON Connect 2.0 for instant deposits and payouts.\n\n👥 Invite friends and get 50 bonus coins for each!\nYour referral link:\nhttps://t.me/GridLottery_bot?start=ref_' + userId + '\n\nClick the button below to launch the game:';
+        btnText = '🎮 Play Grid Lottery';
     }
 
     ctx.setChatMenuButton({ type: 'web_app', text: menuText, web_app: { url: webAppUrl } }).catch(e => console.log(e));
@@ -123,8 +123,8 @@ bot.command('rules', (ctx) => {
 });
 
 bot.telegram.setMyCommands([
-    { command: 'start', description: 'Запустить бота / Открыть игру' },
-    { command: 'rules', description: 'Правила и описание' }
+    { command: 'start', description: 'Запустить игру / Open Game' },
+    { command: 'rules', description: 'Правила и соглашение / Rules' }
 ]).catch(e => console.log('Error setting commands:', e));
 
 bot.launch();

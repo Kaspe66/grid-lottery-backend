@@ -1,11 +1,11 @@
 {
-    "name": "Grid Lottery — TON & GRAM",
+    "name": "Grid Lottery — Web3 Game on TON",
     "short_name": "GridLottery",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0F172A",
     "theme_color": "#0098EA",
-    "description": "Decentralized Web3 Lottery on The Open Network (TON) with GRAM token.",
+    "description": "Multiplayer Web3 Grid Lottery on The Open Network (TON) with TON Connect 2.0.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
