@@ -53,23 +53,23 @@ class AppTranslations {
       'emojis_btn': 'Emojis 😀',
       'error_funds': 'Transaction cancelled. Ensure enough balance for transfer and network fees.',
       'error_tx': 'Transaction error: ',
-      'withdraw': 'Withdraw GRAM (TON)',
-      'real_balance': 'GRAM Balance (TON)',
+      'withdraw': 'Withdraw',
+      'real_balance': 'Real Balance',
       'bonus_balance': 'Bonus Balance',
       'enter_wallet': 'TON Wallet address (UQ... / EQ...)',
       'amount': 'Amount',
       'withdraw_btn': 'Submit Withdrawal',
-      'real_rooms': '💎 GRAM (TON)',
-      'bonus_rooms': '🎁 BONUS',
-      'real_room': 'GRAM',
+      'real_rooms': 'REAL',
+      'bonus_rooms': 'BONUS',
+      'real_room': 'Real',
       'bonus_room': 'Bonus',
       'room': 'Room',
-      'total_won_real': 'Total Won (GRAM)',
+      'total_won_real': 'Total Won (Real)',
       'total_won_bonus': 'Total Won (Bonus)',
       'settings': 'Settings',
       'sound': 'Sound',
       'vibration': 'Vibration',
-      'not_enough_funds_deposit': 'Not enough funds on balance, please deposit GRAM!',
+      'not_enough_funds_deposit': 'Not enough funds on balance, please deposit!',
       'error_telegram_only': 'Access only via Telegram',
       'error_signature': 'Telegram signature error',
       'error_banned': 'Your account is banned!',
@@ -77,14 +77,14 @@ class AppTranslations {
       'error_room_full': 'Room is full',
       'error_maintenance': 'Maintenance in progress. Bets are temporarily unavailable.',
       'error_cell_taken': 'Cell is already taken',
-      'error_not_enough_real': 'Not enough GRAM funds',
+      'error_not_enough_real': 'Not enough coins',
       'error_not_enough_bonus': 'Not enough bonus coins',
       'daily_bonus_success': 'You received your daily bonus!',
       'error_daily_bonus_cooldown': 'Bonus is not available yet',
-      'exchange_success': 'Successfully exchanged 10000 bonus for 10 GRAM!',
+      'exchange_success': 'Successfully exchanged 10000 bonus for 10 real coins!',
       'error_exchange_not_enough': 'Not enough bonus coins for exchange (min 10000)',
       'error_invalid_wallet': 'Invalid TON wallet address.',
-      'error_min_withdrawal': 'Minimum withdrawal amount is 500 coins (0.5 GRAM)',
+      'error_min_withdrawal': 'Minimum withdrawal amount is 500 coins',
       'error_no_deposit': 'At least one deposit is required to withdraw',
       'error_server_withdrawal': 'Server error while creating request',
       'withdrawal_success': 'Withdrawal request created successfully',
@@ -129,7 +129,7 @@ class AppTranslations {
       'Любитель': 'Любитель',
       'Профи': 'Профи',
       'Элита': 'Элита',
-      'deposit': 'Пополнить GRAM (TON)',
+      'deposit': 'Пополнить',
       'connected_wallet': 'Привязанный TON кошелек',
       'connect_wallet': 'Подключить TON',
       'connect_wallet_desc': 'Подключите кошелек для мгновенных пополнений и вывода',
@@ -137,23 +137,23 @@ class AppTranslations {
       'emojis_btn': 'Эмодзи 😀',
       'error_funds': 'Транзакция отменена. Убедитесь, что на балансе достаточно средств для перевода и оплаты комиссии сети.',
       'error_tx': 'Ошибка транзакции: ',
-      'withdraw': 'Вывести GRAM (TON)',
-      'real_balance': 'Баланс GRAM (TON)',
+      'withdraw': 'Вывести',
+      'real_balance': 'Реальный баланс',
       'bonus_balance': 'Бонусный баланс',
       'enter_wallet': 'Адрес TON кошелька (UQ... / EQ...)',
       'amount': 'Сумма',
       'withdraw_btn': 'Отправить заявку',
-      'real_rooms': '💎 GRAM (TON)',
-      'bonus_rooms': '🎁 БОНУСНЫЕ',
-      'real_room': 'GRAM',
+      'real_rooms': 'РЕАЛЬНЫЕ',
+      'bonus_rooms': 'БОНУСНЫЕ',
+      'real_room': 'Реал',
       'bonus_room': 'Бонус',
       'room': 'Комната',
-      'total_won_real': 'Выиграно (GRAM)',
+      'total_won_real': 'Выиграно (Реал)',
       'total_won_bonus': 'Выиграно (Бонусы)',
       'settings': 'Настройки',
       'sound': 'Звук',
       'vibration': 'Вибрация',
-      'not_enough_funds_deposit': 'Недостаточно средств на балансе! Пожалуйста, пополните счет GRAM.',
+      'not_enough_funds_deposit': 'Недостаточно средств на балансе! Пожалуйста, пополните счет.',
       'error_telegram_only': 'Доступ только через Telegram',
       'error_signature': 'Ошибка подписи Telegram',
       'error_banned': 'Ваш аккаунт заблокирован!',
@@ -161,14 +161,14 @@ class AppTranslations {
       'error_room_full': 'Комната переполнена',
       'error_maintenance': 'Идут технические работы. Ставки временно недоступны.',
       'error_cell_taken': 'Ячейка уже занята',
-      'error_not_enough_real': 'Недостаточно GRAM на балансе',
+      'error_not_enough_real': 'Недостаточно средств на реальном балансе',
       'error_not_enough_bonus': 'Недостаточно бонусных средств',
       'daily_bonus_success': 'Вы получили ежедневный бонус!',
       'error_daily_bonus_cooldown': 'Бонус пока недоступен',
-      'exchange_success': 'Успешно обменено 10000 бонусов на 10 GRAM!',
+      'exchange_success': 'Успешно обменено 10000 бонусов на 10 реальных монет!',
       'error_exchange_not_enough': 'Недостаточно бонусных монет для обмена (минимум 10000)',
       'error_invalid_wallet': 'Некорректный адрес кошелька TON.',
-      'error_min_withdrawal': 'Минимальная сумма вывода - 500 монет (0.5 GRAM)',
+      'error_min_withdrawal': 'Минимальная сумма вывода - 500 монет',
       'error_no_deposit': 'Для вывода средств необходим хотя бы один депозит (пополнение)',
       'error_server_withdrawal': 'Ошибка сервера при создании заявки',
       'withdrawal_success': 'Заявка на вывод успешно создана',
@@ -510,20 +510,20 @@ class _MainScreenState extends State<MainScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ChoiceChip(
-                avatar: const Icon(Icons.diamond, color: Color(0xFF0098EA), size: 18),
+                avatar: const Icon(Icons.monetization_on, color: Colors.green, size: 18),
                 label: Text(AppTranslations.t('real_rooms')),
                 selected: _selectedCurrency == 'REAL',
-                selectedColor: const Color(0xFF0098EA).withOpacity(0.3),
+                selectedColor: Colors.green.withOpacity(0.3),
                 onSelected: (val) {
                   if (val) setState(() => _selectedCurrency = 'REAL');
                 },
               ),
               const SizedBox(width: 16),
               ChoiceChip(
-                avatar: const Icon(Icons.card_giftcard, color: Colors.amber, size: 18),
+                avatar: const Icon(Icons.monetization_on, color: Colors.blue, size: 18),
                 label: Text(AppTranslations.t('bonus_rooms')),
                 selected: _selectedCurrency == 'BONUS',
-                selectedColor: Colors.amber.withOpacity(0.3),
+                selectedColor: Colors.blue.withOpacity(0.3),
                 onSelected: (val) {
                   if (val) setState(() => _selectedCurrency = 'BONUS');
                 },
@@ -599,7 +599,7 @@ class _MainScreenState extends State<MainScreen> {
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
+                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       '${AppTranslations.t('players')}: ${room['playersCount']} / ${room['maxPlayers']}',
                       style: TextStyle(
@@ -610,7 +610,7 @@ class _MainScreenState extends State<MainScreen> {
                   trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(_selectedCurrency == 'REAL' ? Icons.diamond : Icons.card_giftcard, color: _selectedCurrency == 'REAL' ? const Color(0xFF0098EA) : Colors.amber, size: 20),
+                      Icon(Icons.monetization_on, color: _selectedCurrency == 'REAL' ? Colors.green : Colors.blue, size: 20),
                       const SizedBox(height: 4),
                       Text('${room['cellPrice']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     ],
@@ -687,20 +687,20 @@ class _MainScreenState extends State<MainScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ChoiceChip(
-                avatar: const Icon(Icons.diamond, color: Color(0xFF0098EA), size: 18),
+                avatar: const Icon(Icons.monetization_on, color: Colors.green, size: 18),
                 label: Text(AppTranslations.t('real_rooms')),
                 selected: _selectedCurrency == 'REAL',
-                selectedColor: const Color(0xFF0098EA).withOpacity(0.3),
+                selectedColor: Colors.green.withOpacity(0.3),
                 onSelected: (val) {
                   if (val) setState(() => _selectedCurrency = 'REAL');
                 },
               ),
               const SizedBox(width: 16),
               ChoiceChip(
-                avatar: const Icon(Icons.card_giftcard, color: Colors.amber, size: 18),
+                avatar: const Icon(Icons.monetization_on, color: Colors.blue, size: 18),
                 label: Text(AppTranslations.t('bonus_rooms')),
                 selected: _selectedCurrency == 'BONUS',
-                selectedColor: Colors.amber.withOpacity(0.3),
+                selectedColor: Colors.blue.withOpacity(0.3),
                 onSelected: (val) {
                   if (val) setState(() => _selectedCurrency = 'BONUS');
                 },
@@ -716,7 +716,7 @@ class _MainScreenState extends State<MainScreen> {
               var u = sortedUsers[index];
               var stats = u['stats'] ?? {};
               var wonValue = _selectedCurrency == 'REAL' ? (stats['totalWonReal'] ?? 0) : (stats['totalWonBonus'] ?? 0);
-              var iconColor = _selectedCurrency == 'REAL' ? const Color(0xFF0098EA) : Colors.amber;
+              var iconColor = _selectedCurrency == 'REAL' ? Colors.green : Colors.blue;
 
               return ListTile(
                 leading: CircleAvatar(
@@ -732,7 +732,7 @@ class _MainScreenState extends State<MainScreen> {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(_selectedCurrency == 'REAL' ? Icons.diamond : Icons.card_giftcard, color: iconColor, size: 20),
+                    Icon(Icons.monetization_on, color: iconColor, size: 20),
                     const SizedBox(width: 6),
                     Text('$wonValue', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   ],
@@ -841,7 +841,8 @@ class _MainScreenState extends State<MainScreen> {
       backgroundColor: const Color(0xFF1E293B),
       title: Row(
         children: [
-          const Text('💎 ', style: TextStyle(fontSize: 20)),
+          const Icon(Icons.add_card, color: Colors.greenAccent, size: 22),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(AppTranslations.t('deposit'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
           ),
@@ -927,7 +928,8 @@ class _MainScreenState extends State<MainScreen> {
         backgroundColor: const Color(0xFF1E293B),
         title: Row(
           children: [
-            const Text('💎 ', style: TextStyle(fontSize: 20)),
+            const Icon(Icons.account_balance_wallet, color: Colors.blueAccent, size: 22),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(AppTranslations.t('withdraw'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
             ),
@@ -939,7 +941,7 @@ class _MainScreenState extends State<MainScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${AppTranslations.t('real_balance')}: $maxAmount (~${(maxAmount / 1000).toStringAsFixed(2)} GRAM)', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                Text('${AppTranslations.t('real_balance')}: $maxAmount (~${(maxAmount / 1000).toStringAsFixed(2)} Gram)', style: const TextStyle(color: Colors.white70, fontSize: 12)),
                 InkWell(
                   onTap: () {
                     setState(() {
@@ -1068,12 +1070,12 @@ class _MainScreenState extends State<MainScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('${AppTranslations.t('real_balance')} (~${(((myData['balance_real'] ?? 0) as num) / 1000).toStringAsFixed(2)} GRAM 💎)', style: const TextStyle(fontSize: 14)),
+                      Text('${AppTranslations.t('real_balance')} (~${(((myData['balance_real'] ?? 0) as num) / 1000).toStringAsFixed(2)} Gram)', style: const TextStyle(fontSize: 14)),
                       Row(
                         children: [
-                          const Icon(Icons.diamond, color: Color(0xFF0098EA), size: 20),
+                          const Icon(Icons.monetization_on, color: Colors.green, size: 20),
                           const SizedBox(width: 8),
-                          Text('${myData['balance_real'] ?? 0}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0098EA))),
+                          Text('${myData['balance_real'] ?? 0}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
                         ],
                       )
                     ],
@@ -1101,9 +1103,9 @@ class _MainScreenState extends State<MainScreen> {
                       Text(AppTranslations.t('bonus_balance'), style: const TextStyle(fontSize: 14)),
                       Row(
                         children: [
-                          const Icon(Icons.card_giftcard, color: Colors.amber, size: 20),
+                          const Icon(Icons.monetization_on, color: Colors.blue, size: 20),
                           const SizedBox(width: 8),
-                          Text('${myData['balance_bonus'] ?? 0}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber)),
+                          Text('${myData['balance_bonus'] ?? 0}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
                         ],
                       )
                     ],
@@ -1119,9 +1121,9 @@ class _MainScreenState extends State<MainScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(AppTranslations.t('exchange_btn_1'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        const Icon(Icons.card_giftcard, color: Colors.amber, size: 18),
+                        const Icon(Icons.monetization_on, color: Colors.blue, size: 18),
                         Text(AppTranslations.t('exchange_btn_2'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        const Icon(Icons.diamond, color: Color(0xFF0098EA), size: 18),
+                        const Icon(Icons.monetization_on, color: Colors.green, size: 18),
                       ],
                     ),
                     onPressed: () {
@@ -1163,7 +1165,7 @@ class _MainScreenState extends State<MainScreen> {
           ListTile(
             title: Text(AppTranslations.t('total_won_real')),
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.diamond, color: Color(0xFF0098EA), size: 20),
+              const Icon(Icons.monetization_on, color: Colors.green, size: 20),
               const SizedBox(width: 8),
               Text('${stats['totalWonReal'] ?? 0}', style: const TextStyle(fontSize: 18)),
             ]),
@@ -1171,7 +1173,7 @@ class _MainScreenState extends State<MainScreen> {
           ListTile(
             title: Text(AppTranslations.t('total_won_bonus')),
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.card_giftcard, color: Colors.amber, size: 20),
+              const Icon(Icons.monetization_on, color: Colors.blue, size: 20),
               const SizedBox(width: 8),
               Text('${stats['totalWonBonus'] ?? 0}', style: const TextStyle(fontSize: 18)),
             ]),
@@ -1299,12 +1301,12 @@ class _MainScreenState extends State<MainScreen> {
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              backgroundColor: const Color(0xFF0098EA).withOpacity(0.2),
-              side: BorderSide(color: const Color(0xFF0098EA).withOpacity(0.4)),
+              backgroundColor: Colors.greenAccent.withOpacity(0.2),
+              side: BorderSide(color: Colors.greenAccent.withOpacity(0.4)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             ),
-            icon: const Icon(Icons.diamond, color: Color(0xFF0098EA)),
-            label: Text(AppTranslations.t('deposit'), style: const TextStyle(fontSize: 18, color: Color(0xFF0098EA), fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.add_card, color: Colors.greenAccent),
+            label: Text(AppTranslations.t('deposit'), style: const TextStyle(fontSize: 18, color: Colors.greenAccent, fontWeight: FontWeight.bold)),
             onPressed: () {
               showDialog(
                 context: context,
@@ -1317,6 +1319,7 @@ class _MainScreenState extends State<MainScreen> {
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               backgroundColor: Colors.blueAccent.withOpacity(0.2),
+              side: BorderSide(color: Colors.blueAccent.withOpacity(0.4)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             ),
             icon: const Icon(Icons.account_balance_wallet, color: Colors.blueAccent),
@@ -1352,13 +1355,7 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('💎 ', style: TextStyle(fontSize: 18)),
-            Text(titles[_currentIndex], style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-          ],
-        ),
+        title: Text(titles[_currentIndex], style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5)),
         centerTitle: true,
         actions: [
           if (_currentIndex == 0)
@@ -1369,8 +1366,8 @@ class _MainScreenState extends State<MainScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      _selectedCurrency == 'REAL' ? Icons.diamond : Icons.card_giftcard,
-                      color: _selectedCurrency == 'REAL' ? const Color(0xFF0098EA) : Colors.amber,
+                      Icons.monetization_on,
+                      color: _selectedCurrency == 'REAL' ? Colors.green : Colors.blue,
                       size: 18,
                     ),
                     const SizedBox(width: 4),
@@ -1379,7 +1376,7 @@ class _MainScreenState extends State<MainScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: _selectedCurrency == 'REAL' ? const Color(0xFF0098EA) : Colors.amber,
+                        color: _selectedCurrency == 'REAL' ? Colors.green : Colors.blue,
                       ),
                     ),
                   ],
