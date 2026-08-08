@@ -45,29 +45,31 @@ class AppTranslations {
       'Любитель': 'Amateur',
       'Профи': 'Pro',
       'Элита': 'Elite',
-      'deposit': 'Deposit',
-      'connected_wallet': 'Connected Wallet',
+      'deposit': 'Deposit GRAM (TON)',
+      'connected_wallet': 'Connected TON Wallet',
+      'connect_wallet': 'Connect TON',
+      'connect_wallet_desc': 'Connect your TON wallet for instant deposits & payouts',
       'unlink': 'Unlink',
       'emojis_btn': 'Emojis 😀',
       'error_funds': 'Transaction cancelled. Ensure enough balance for transfer and network fees.',
       'error_tx': 'Transaction error: ',
-      'withdraw': 'Withdraw',
-      'real_balance': 'Real Balance',
+      'withdraw': 'Withdraw GRAM (TON)',
+      'real_balance': 'GRAM Balance (TON)',
       'bonus_balance': 'Bonus Balance',
-      'enter_wallet': 'Wallet address (TON)',
+      'enter_wallet': 'TON Wallet address (UQ... / EQ...)',
       'amount': 'Amount',
       'withdraw_btn': 'Submit Withdrawal',
-      'real_rooms': 'REAL',
-      'bonus_rooms': 'BONUS',
-      'real_room': 'Real',
+      'real_rooms': '💎 GRAM (TON)',
+      'bonus_rooms': '🎁 BONUS',
+      'real_room': 'GRAM',
       'bonus_room': 'Bonus',
       'room': 'Room',
-      'total_won_real': 'Total Won (Real)',
+      'total_won_real': 'Total Won (GRAM)',
       'total_won_bonus': 'Total Won (Bonus)',
       'settings': 'Settings',
       'sound': 'Sound',
       'vibration': 'Vibration',
-      'not_enough_funds_deposit': 'Not enough funds on balance, please deposit!',
+      'not_enough_funds_deposit': 'Not enough funds on balance, please deposit GRAM!',
       'error_telegram_only': 'Access only via Telegram',
       'error_signature': 'Telegram signature error',
       'error_banned': 'Your account is banned!',
@@ -75,14 +77,14 @@ class AppTranslations {
       'error_room_full': 'Room is full',
       'error_maintenance': 'Maintenance in progress. Bets are temporarily unavailable.',
       'error_cell_taken': 'Cell is already taken',
-      'error_not_enough_real': 'Not enough real coins',
+      'error_not_enough_real': 'Not enough GRAM funds',
       'error_not_enough_bonus': 'Not enough bonus coins',
       'daily_bonus_success': 'You received your daily bonus!',
       'error_daily_bonus_cooldown': 'Bonus is not available yet',
-      'exchange_success': 'Successfully exchanged 10000 bonus for 10 real!',
+      'exchange_success': 'Successfully exchanged 10000 bonus for 10 GRAM!',
       'error_exchange_not_enough': 'Not enough bonus coins for exchange (min 10000)',
       'error_invalid_wallet': 'Invalid TON wallet address.',
-      'error_min_withdrawal': 'Minimum withdrawal amount is 500 coins',
+      'error_min_withdrawal': 'Minimum withdrawal amount is 500 coins (0.5 GRAM)',
       'error_no_deposit': 'At least one deposit is required to withdraw',
       'error_server_withdrawal': 'Server error while creating request',
       'withdrawal_success': 'Withdrawal request created successfully',
@@ -92,7 +94,7 @@ class AppTranslations {
       'my_referrals': 'My Referrals',
       'sort': 'Sort',
       'plus_10_bonus_coins': '+10 Bonus Coins',
-      'share_text': 'Join the game and get 50 coins!',
+      'share_text': 'Join Grid Lottery on TON and get 50 coins!',
       'no_referrals': 'No referrals',
       'pending_withdrawals': 'Pending withdrawals:',
       'no_referrals_yet': 'You have no referrals yet'
@@ -127,29 +129,31 @@ class AppTranslations {
       'Любитель': 'Любитель',
       'Профи': 'Профи',
       'Элита': 'Элита',
-      'deposit': 'Пополнить',
-      'connected_wallet': 'Привязанный кошелек',
+      'deposit': 'Пополнить GRAM (TON)',
+      'connected_wallet': 'Привязанный TON кошелек',
+      'connect_wallet': 'Подключить TON',
+      'connect_wallet_desc': 'Подключите кошелек для мгновенных пополнений и вывода',
       'unlink': 'Отвязать',
       'emojis_btn': 'Эмодзи 😀',
       'error_funds': 'Транзакция отменена. Убедитесь, что на балансе достаточно средств для перевода и оплаты комиссии сети.',
       'error_tx': 'Ошибка транзакции: ',
-      'withdraw': 'Вывести',
-      'real_balance': 'Реальный баланс',
+      'withdraw': 'Вывести GRAM (TON)',
+      'real_balance': 'Баланс GRAM (TON)',
       'bonus_balance': 'Бонусный баланс',
-      'enter_wallet': 'Адрес кошелька (TON)',
+      'enter_wallet': 'Адрес TON кошелька (UQ... / EQ...)',
       'amount': 'Сумма',
       'withdraw_btn': 'Отправить заявку',
-      'real_rooms': 'РЕАЛЬНЫЕ',
-      'bonus_rooms': 'БОНУСНЫЕ',
-      'real_room': 'Реал',
+      'real_rooms': '💎 GRAM (TON)',
+      'bonus_rooms': '🎁 БОНУСНЫЕ',
+      'real_room': 'GRAM',
       'bonus_room': 'Бонус',
       'room': 'Комната',
-      'total_won_real': 'Выиграно (Реал)',
+      'total_won_real': 'Выиграно (GRAM)',
       'total_won_bonus': 'Выиграно (Бонусы)',
       'settings': 'Настройки',
       'sound': 'Звук',
       'vibration': 'Вибрация',
-      'not_enough_funds_deposit': 'Недостаточно средств на балансе! Пожалуйста, пополните счет.',
+      'not_enough_funds_deposit': 'Недостаточно средств на балансе! Пожалуйста, пополните счет GRAM.',
       'error_telegram_only': 'Доступ только через Telegram',
       'error_signature': 'Ошибка подписи Telegram',
       'error_banned': 'Ваш аккаунт заблокирован!',
@@ -157,14 +161,14 @@ class AppTranslations {
       'error_room_full': 'Комната переполнена',
       'error_maintenance': 'Идут технические работы. Ставки временно недоступны.',
       'error_cell_taken': 'Ячейка уже занята',
-      'error_not_enough_real': 'Недостаточно реальных средств',
+      'error_not_enough_real': 'Недостаточно GRAM на балансе',
       'error_not_enough_bonus': 'Недостаточно бонусных средств',
       'daily_bonus_success': 'Вы получили ежедневный бонус!',
       'error_daily_bonus_cooldown': 'Бонус пока недоступен',
-      'exchange_success': 'Успешно обменено 10000 бонусов на 10 реал!',
+      'exchange_success': 'Успешно обменено 10000 бонусов на 10 GRAM!',
       'error_exchange_not_enough': 'Недостаточно бонусных монет для обмена (минимум 10000)',
       'error_invalid_wallet': 'Некорректный адрес кошелька TON.',
-      'error_min_withdrawal': 'Минимальная сумма вывода - 500 монет',
+      'error_min_withdrawal': 'Минимальная сумма вывода - 500 монет (0.5 GRAM)',
       'error_no_deposit': 'Для вывода средств необходим хотя бы один депозит (пополнение)',
       'error_server_withdrawal': 'Ошибка сервера при создании заявки',
       'withdrawal_success': 'Заявка на вывод успешно создана',
@@ -174,7 +178,7 @@ class AppTranslations {
       'my_referrals': 'Мои рефералы',
       'sort': 'Сортировка',
       'plus_10_bonus_coins': '+10 Бонусных Монет',
-      'share_text': 'Присоединяйся к игре и получи 50 монет!',
+      'share_text': 'Присоединяйся к Grid Lottery на TON и получи 50 монет!',
       'no_referrals': 'Нет рефералов',
       'pending_withdrawals': 'На подтверждении на вывод:',
       'no_referrals_yet': 'У вас пока нет рефералов'
@@ -506,18 +510,20 @@ class _MainScreenState extends State<MainScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ChoiceChip(
+                avatar: const Icon(Icons.diamond, color: Color(0xFF0098EA), size: 18),
                 label: Text(AppTranslations.t('real_rooms')),
                 selected: _selectedCurrency == 'REAL',
-                selectedColor: Colors.green.withOpacity(0.3),
+                selectedColor: const Color(0xFF0098EA).withOpacity(0.3),
                 onSelected: (val) {
                   if (val) setState(() => _selectedCurrency = 'REAL');
                 },
               ),
               const SizedBox(width: 16),
               ChoiceChip(
+                avatar: const Icon(Icons.card_giftcard, color: Colors.amber, size: 18),
                 label: Text(AppTranslations.t('bonus_rooms')),
                 selected: _selectedCurrency == 'BONUS',
-                selectedColor: Colors.blue.withOpacity(0.3),
+                selectedColor: Colors.amber.withOpacity(0.3),
                 onSelected: (val) {
                   if (val) setState(() => _selectedCurrency = 'BONUS');
                 },
@@ -604,7 +610,7 @@ class _MainScreenState extends State<MainScreen> {
                   trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.monetization_on, color: _selectedCurrency == 'REAL' ? Colors.green : Colors.blue, size: 20),
+                      Icon(_selectedCurrency == 'REAL' ? Icons.diamond : Icons.card_giftcard, color: _selectedCurrency == 'REAL' ? const Color(0xFF0098EA) : Colors.amber, size: 20),
                       const SizedBox(height: 4),
                       Text('${room['cellPrice']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     ],
@@ -681,18 +687,20 @@ class _MainScreenState extends State<MainScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ChoiceChip(
+                avatar: const Icon(Icons.diamond, color: Color(0xFF0098EA), size: 18),
                 label: Text(AppTranslations.t('real_rooms')),
                 selected: _selectedCurrency == 'REAL',
-                selectedColor: Colors.green.withOpacity(0.3),
+                selectedColor: const Color(0xFF0098EA).withOpacity(0.3),
                 onSelected: (val) {
                   if (val) setState(() => _selectedCurrency = 'REAL');
                 },
               ),
               const SizedBox(width: 16),
               ChoiceChip(
+                avatar: const Icon(Icons.card_giftcard, color: Colors.amber, size: 18),
                 label: Text(AppTranslations.t('bonus_rooms')),
                 selected: _selectedCurrency == 'BONUS',
-                selectedColor: Colors.blue.withOpacity(0.3),
+                selectedColor: Colors.amber.withOpacity(0.3),
                 onSelected: (val) {
                   if (val) setState(() => _selectedCurrency = 'BONUS');
                 },
@@ -708,7 +716,7 @@ class _MainScreenState extends State<MainScreen> {
               var u = sortedUsers[index];
               var stats = u['stats'] ?? {};
               var wonValue = _selectedCurrency == 'REAL' ? (stats['totalWonReal'] ?? 0) : (stats['totalWonBonus'] ?? 0);
-              var iconColor = _selectedCurrency == 'REAL' ? Colors.green : Colors.blue;
+              var iconColor = _selectedCurrency == 'REAL' ? const Color(0xFF0098EA) : Colors.amber;
 
               return ListTile(
                 leading: CircleAvatar(
@@ -717,14 +725,14 @@ class _MainScreenState extends State<MainScreen> {
                       ? NetworkImage('$backendUrl/avatar?url=${Uri.encodeComponent(u['photo_url'])}')
                       : null,
                   child: u['photo_url'] == null || u['photo_url'].toString().isEmpty
-                      ? Text('${index + 1}', style: TextStyle(color: Colors.white))
+                      ? Text('${index + 1}', style: const TextStyle(color: Colors.white))
                       : null,
                 ),
                 title: Text(u['name'] ?? 'User', style: const TextStyle(fontWeight: FontWeight.bold)),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.monetization_on, color: iconColor, size: 20),
+                    Icon(_selectedCurrency == 'REAL' ? Icons.diamond : Icons.card_giftcard, color: iconColor, size: 20),
                     const SizedBox(width: 6),
                     Text('$wonValue', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   ],
@@ -831,7 +839,14 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildDepositDialog() {
     return AlertDialog(
       backgroundColor: const Color(0xFF1E293B),
-      title: Text(AppTranslations.t('deposit'), style: const TextStyle(color: Colors.white)),
+      title: Row(
+        children: [
+          const Text('💎 ', style: TextStyle(fontSize: 20)),
+          Expanded(
+            child: Text(AppTranslations.t('deposit'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+          ),
+        ],
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -854,7 +869,8 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildDepositOption(int gram, int coins) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blueAccent.withOpacity(0.2),
+        backgroundColor: const Color(0xFF0098EA).withOpacity(0.15),
+        side: BorderSide(color: const Color(0xFF0098EA).withOpacity(0.4)),
         minimumSize: const Size(double.infinity, 50),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
@@ -878,7 +894,12 @@ class _MainScreenState extends State<MainScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('$gram Gram', style: const TextStyle(fontSize: 18, color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+          Row(
+            children: [
+              const Text('💎 ', style: TextStyle(fontSize: 16)),
+              Text('$gram GRAM', style: const TextStyle(fontSize: 16, color: Color(0xFF0098EA), fontWeight: FontWeight.bold)),
+            ],
+          ),
           const Icon(Icons.arrow_forward, color: Colors.white54),
           Row(
             children: [
@@ -904,14 +925,21 @@ class _MainScreenState extends State<MainScreen> {
     return StatefulBuilder(builder: (context, setState) {
       return AlertDialog(
         backgroundColor: const Color(0xFF1E293B),
-        title: Text(AppTranslations.t('withdraw'), style: const TextStyle(color: Colors.white)),
+        title: Row(
+          children: [
+            const Text('💎 ', style: TextStyle(fontSize: 20)),
+            Expanded(
+              child: Text(AppTranslations.t('withdraw'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+            ),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${AppTranslations.t('real_balance')}: $maxAmount', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                Text('${AppTranslations.t('real_balance')}: $maxAmount (~${(maxAmount / 1000).toStringAsFixed(2)} GRAM)', style: const TextStyle(color: Colors.white70, fontSize: 12)),
                 InkWell(
                   onTap: () {
                     setState(() {
@@ -919,7 +947,7 @@ class _MainScreenState extends State<MainScreen> {
                       amountController.text = amount.toString();
                     });
                   },
-                  child: const Text('MAX', style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 12)),
+                  child: const Text('MAX', style: TextStyle(color: Color(0xFF0098EA), fontWeight: FontWeight.bold, fontSize: 12)),
                 )
               ],
             ),
@@ -929,7 +957,7 @@ class _MainScreenState extends State<MainScreen> {
                 labelText: AppTranslations.t('amount'),
                 labelStyle: const TextStyle(color: Colors.white54),
                 enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
-                focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.blueAccent)),
+                focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF0098EA))),
               ),
               keyboardType: TextInputType.number,
               style: const TextStyle(color: Colors.white),
@@ -941,7 +969,7 @@ class _MainScreenState extends State<MainScreen> {
                 labelText: AppTranslations.t('enter_wallet'),
                 labelStyle: const TextStyle(color: Colors.white54),
                 enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
-                focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.blueAccent)),
+                focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF0098EA))),
               ),
               controller: walletController,
               style: const TextStyle(color: Colors.white),
@@ -955,12 +983,12 @@ class _MainScreenState extends State<MainScreen> {
             child: Text(AppTranslations.t('cancel'), style: const TextStyle(color: Colors.white54)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0098EA)),
             onPressed: () {
               socket.emit('request_withdrawal', {'amount': amount, 'wallet': wallet});
               Navigator.pop(context);
             },
-            child: Text(AppTranslations.t('withdraw_btn'), style: const TextStyle(color: Colors.white)),
+            child: Text(AppTranslations.t('withdraw_btn'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       );
@@ -1040,12 +1068,12 @@ class _MainScreenState extends State<MainScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('${AppTranslations.t('real_balance')} (~${(((myData['balance_real'] ?? 0) as num) / 1000).toString()} Gram)', style: const TextStyle(fontSize: 14)),
+                      Text('${AppTranslations.t('real_balance')} (~${(((myData['balance_real'] ?? 0) as num) / 1000).toStringAsFixed(2)} GRAM 💎)', style: const TextStyle(fontSize: 14)),
                       Row(
                         children: [
-                          const Icon(Icons.monetization_on, color: Colors.green, size: 20),
+                          const Icon(Icons.diamond, color: Color(0xFF0098EA), size: 20),
                           const SizedBox(width: 8),
-                          Text('${myData['balance_real'] ?? 0}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
+                          Text('${myData['balance_real'] ?? 0}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0098EA))),
                         ],
                       )
                     ],
@@ -1073,9 +1101,9 @@ class _MainScreenState extends State<MainScreen> {
                       Text(AppTranslations.t('bonus_balance'), style: const TextStyle(fontSize: 14)),
                       Row(
                         children: [
-                          const Icon(Icons.monetization_on, color: Colors.blue, size: 20),
+                          const Icon(Icons.card_giftcard, color: Colors.amber, size: 20),
                           const SizedBox(width: 8),
-                          Text('${myData['balance_bonus'] ?? 0}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
+                          Text('${myData['balance_bonus'] ?? 0}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber)),
                         ],
                       )
                     ],
@@ -1091,9 +1119,9 @@ class _MainScreenState extends State<MainScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(AppTranslations.t('exchange_btn_1'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        const Icon(Icons.monetization_on, color: Colors.blue, size: 18),
+                        const Icon(Icons.card_giftcard, color: Colors.amber, size: 18),
                         Text(AppTranslations.t('exchange_btn_2'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        const Icon(Icons.monetization_on, color: Colors.green, size: 18),
+                        const Icon(Icons.diamond, color: Color(0xFF0098EA), size: 18),
                       ],
                     ),
                     onPressed: () {
@@ -1119,7 +1147,7 @@ class _MainScreenState extends State<MainScreen> {
             title: Text(AppTranslations.t('my_referrals')),
             trailing: Container(
               padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(color: Colors.blueAccent, shape: BoxShape.circle),
+              decoration: const BoxDecoration(color: Color(0xFF0098EA), shape: BoxShape.circle),
               child: Text('${myData['referralsCount'] ?? 0}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
             onTap: () {
@@ -1135,7 +1163,7 @@ class _MainScreenState extends State<MainScreen> {
           ListTile(
             title: Text(AppTranslations.t('total_won_real')),
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.monetization_on, color: Colors.green, size: 20),
+              const Icon(Icons.diamond, color: Color(0xFF0098EA), size: 20),
               const SizedBox(width: 8),
               Text('${stats['totalWonReal'] ?? 0}', style: const TextStyle(fontSize: 18)),
             ]),
@@ -1143,7 +1171,7 @@ class _MainScreenState extends State<MainScreen> {
           ListTile(
             title: Text(AppTranslations.t('total_won_bonus')),
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.monetization_on, color: Colors.blue, size: 20),
+              const Icon(Icons.card_giftcard, color: Colors.amber, size: 20),
               const SizedBox(width: 8),
               Text('${stats['totalWonBonus'] ?? 0}', style: const TextStyle(fontSize: 18)),
             ]),
@@ -1161,15 +1189,15 @@ class _MainScreenState extends State<MainScreen> {
             title: Text(AppTranslations.t('sound')),
             value: _isSoundEnabled,
             onChanged: _toggleSound,
-            activeColor: Colors.blueAccent,
-            secondary: Icon(_isSoundEnabled ? Icons.volume_up : Icons.volume_off, color: Colors.blueAccent),
+            activeColor: const Color(0xFF0098EA),
+            secondary: Icon(_isSoundEnabled ? Icons.volume_up : Icons.volume_off, color: const Color(0xFF0098EA)),
           ),
           SwitchListTile(
             title: Text(AppTranslations.t('vibration')),
             value: _isVibrationEnabled,
             onChanged: _toggleVibration,
-            activeColor: Colors.blueAccent,
-            secondary: Icon(_isVibrationEnabled ? Icons.vibration : Icons.smartphone, color: Colors.blueAccent),
+            activeColor: const Color(0xFF0098EA),
+            secondary: Icon(_isVibrationEnabled ? Icons.vibration : Icons.smartphone, color: const Color(0xFF0098EA)),
           ),
           const Divider(color: Colors.white12),
           const SizedBox(height: 12),
@@ -1179,11 +1207,11 @@ class _MainScreenState extends State<MainScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 16),
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.blueAccent.withOpacity(0.05),
-                border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+                color: const Color(0xFF0098EA).withOpacity(0.08),
+                border: Border.all(color: const Color(0xFF0098EA).withOpacity(0.3)),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
-                  BoxShadow(color: Colors.blueAccent.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                  BoxShadow(color: const Color(0xFF0098EA).withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
                 ],
               ),
               child: Row(
@@ -1191,10 +1219,10 @@ class _MainScreenState extends State<MainScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.blueAccent.withOpacity(0.1),
+                      color: const Color(0xFF0098EA).withOpacity(0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.wallet, color: Colors.blueAccent, size: 28),
+                    child: const Text('💎', style: TextStyle(fontSize: 20)),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -1205,7 +1233,7 @@ class _MainScreenState extends State<MainScreen> {
                         const SizedBox(height: 4),
                         Text(
                           '${_connectedWallet!.substring(0, 4)}...${_connectedWallet!.substring(_connectedWallet!.length - 4)}',
-                          style: const TextStyle(fontSize: 18, color: Colors.blueAccent, fontWeight: FontWeight.bold, letterSpacing: 1.1),
+                          style: const TextStyle(fontSize: 16, color: Color(0xFF0098EA), fontWeight: FontWeight.bold, letterSpacing: 1.1),
                         ),
                       ],
                     ),
@@ -1225,17 +1253,58 @@ class _MainScreenState extends State<MainScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+          ] else ...[
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [const Color(0xFF0098EA).withOpacity(0.2), const Color(0xFF0077B5).withOpacity(0.08)],
+                ),
+                border: Border.all(color: const Color(0xFF0098EA).withOpacity(0.4)),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  const Text('💎', style: TextStyle(fontSize: 28)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('TON Connect 2.0', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
+                        const SizedBox(height: 2),
+                        Text(AppTranslations.t('connect_wallet_desc'), style: const TextStyle(fontSize: 11, color: Colors.white70)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0098EA),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: () {
+                      try { js.context.callMethod('openTonConnectModal'); } catch(e) {}
+                    },
+                    child: Text(AppTranslations.t('connect_wallet'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
           ],
           
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              backgroundColor: Colors.greenAccent.withOpacity(0.2),
+              backgroundColor: const Color(0xFF0098EA).withOpacity(0.2),
+              side: BorderSide(color: const Color(0xFF0098EA).withOpacity(0.4)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             ),
-            icon: const Icon(Icons.account_balance_wallet, color: Colors.greenAccent),
-            label: Text(AppTranslations.t('deposit'), style: const TextStyle(fontSize: 20, color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.diamond, color: Color(0xFF0098EA)),
+            label: Text(AppTranslations.t('deposit'), style: const TextStyle(fontSize: 18, color: Color(0xFF0098EA), fontWeight: FontWeight.bold)),
             onPressed: () {
               showDialog(
                 context: context,
@@ -1251,7 +1320,7 @@ class _MainScreenState extends State<MainScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             ),
             icon: const Icon(Icons.account_balance_wallet, color: Colors.blueAccent),
-            label: Text(AppTranslations.t('withdraw'), style: const TextStyle(fontSize: 20, color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+            label: Text(AppTranslations.t('withdraw'), style: const TextStyle(fontSize: 18, color: Colors.blueAccent, fontWeight: FontWeight.bold)),
             onPressed: () {
               showDialog(
                 context: context,
@@ -1283,29 +1352,98 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(titles[_currentIndex], style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2)),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('💎 ', style: TextStyle(fontSize: 18)),
+            Text(titles[_currentIndex], style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+          ],
+        ),
         centerTitle: true,
         actions: [
           if (_currentIndex == 0)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
               child: Center(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.monetization_on,
-                      color: _selectedCurrency == 'REAL' ? Colors.green : Colors.blue,
-                      size: 20,
+                      _selectedCurrency == 'REAL' ? Icons.diamond : Icons.card_giftcard,
+                      color: _selectedCurrency == 'REAL' ? const Color(0xFF0098EA) : Colors.amber,
+                      size: 18,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     Text(
                       _formatBalance((users[_myTelegramId]?['balance_${_selectedCurrency.toLowerCase()}'] ?? 0) as num),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: _selectedCurrency == 'REAL' ? Colors.green : Colors.blue,
+                        fontSize: 14,
+                        color: _selectedCurrency == 'REAL' ? const Color(0xFF0098EA) : Colors.amber,
                       ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          // TON Connect Action Button
+          if (_connectedWallet == null)
+            GestureDetector(
+              onTap: () {
+                try {
+                  js.context.callMethod('openTonConnectModal');
+                } catch (e) {
+                  print(e);
+                }
+              },
+              child: Container(
+                margin: const EdgeInsets.only(right: 12, left: 6, top: 10, bottom: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0098EA), Color(0xFF0077B5)],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(color: const Color(0xFF0098EA).withOpacity(0.4), blurRadius: 6, offset: const Offset(0, 2)),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('💎', style: TextStyle(fontSize: 12)),
+                    const SizedBox(width: 4),
+                    Text(
+                      AppTranslations.t('connect_wallet'),
+                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _currentIndex = 3;
+                });
+              },
+              child: Container(
+                margin: const EdgeInsets.only(right: 12, left: 6, top: 10, bottom: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0098EA).withOpacity(0.15),
+                  border: Border.all(color: const Color(0xFF0098EA).withOpacity(0.4)),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('💎', style: TextStyle(fontSize: 11)),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${_connectedWallet!.substring(0, 4)}...${_connectedWallet!.substring(_connectedWallet!.length - 4)}',
+                      style: const TextStyle(color: Color(0xFF0098EA), fontSize: 11, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),

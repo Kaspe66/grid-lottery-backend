@@ -65,18 +65,19 @@ app.get('/avatar', async (req, res) => {
 bot.start((ctx) => {
     const userId = ctx.from.id;
     const lang = ctx.from.language_code;
-    let menuText = 'Играть 🎲';
-    let msgText = 'Добро пожаловать в Grid Lottery! 🎲\n\nУникальная игра, где ты можешь испытать удачу на сетке из 100 ячеек!\nВыбирай ячейки, делай ставки бонусными или реальными монетами, и забирай банк, если рулетка остановится на твоей ячейке.\n\nПриглашай друзей и получай 50 монет за каждого!\nТвоя ссылка:\nhttps://t.me/GridLottery_bot?start=ref_' + userId + '\n\nНажми кнопку ниже, чтобы зайти в комнату:';
-    let btnText = '🕹 Открыть игру';
+    let menuText = 'Играть 💎';
+    let msgText = '💎 <b>Добро пожаловать в Grid Lottery!</b>\n\nWeb3 игра на блокчейне <b>The Open Network (TON)</b> с использованием токена <b>GRAM</b>!\n\n🎲 Выбирай ячейки на сетке 10х10, делай ставки в GRAM (TON) или бонусных монетах и забирай джекпот!\n🔗 Поддержка TON Connect 2.0 для мгновенных пополнений и выводов.\n\n👥 Приглашай друзей и получай 50 монет за каждого!\nТвоя ссылка:\nhttps://t.me/GridLottery_bot?start=ref_' + userId + '\n\nНажми кнопку ниже, чтобы запустить игру:';
+    let btnText = '💎 Играть на TON';
 
     if (lang && !lang.startsWith('ru')) {
-        menuText = 'Play 🎲';
-        msgText = 'Welcome to Grid Lottery! 🎲\n\nA unique game where you can test your luck on a 100-cell grid!\nPick cells, place bets with bonus or real coins, and take the bank if the roulette stops on your cell.\n\nInvite friends and get 50 coins for each!\nYour link:\nhttps://t.me/GridLottery_bot?start=ref_' + userId + '\n\nClick the button below to join a room:';
-        btnText = '🕹 Open Game';
+        menuText = 'Play 💎';
+        msgText = '💎 <b>Welcome to Grid Lottery!</b>\n\nWeb3 game on <b>The Open Network (TON)</b> powered by <b>GRAM token</b>!\n\n🎲 Choose cells on a 10x10 grid, place bets in GRAM (TON) or bonus coins, and win the jackpot!\n🔗 Built-in TON Connect 2.0 for instant deposits and withdrawals.\n\n👥 Invite friends and get 50 coins for each!\nYour link:\nhttps://t.me/GridLottery_bot?start=ref_' + userId + '\n\nClick the button below to launch the game:';
+        btnText = '💎 Play on TON';
     }
 
     ctx.setChatMenuButton({ type: 'web_app', text: menuText, web_app: { url: webAppUrl } }).catch(e => console.log(e));
     ctx.reply(msgText, {
+        parse_mode: 'HTML',
         reply_markup: {
             inline_keyboard: [
                 [{ text: btnText, web_app: { url: webAppUrl } }]

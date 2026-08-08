@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — Grid Lottery (TON Network)</title>
+  <style>
+    :root {
+      --bg-color: #0b1120;
+      --card-bg: #1e293b;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #0098ea;
+      --accent-hover: #0ea5e9;
+      --border: rgba(255, 255, 255, 0.1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 24px 16px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 32px 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    h2 {
+      font-size: 20px;
+      color: #38bdf8;
+      margin-top: 24px;
+      margin-bottom: 12px;
+    }
+    p, li {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-bottom: 12px;
+    }
+    ul {
+      margin-left: 20px;
+      margin-bottom: 16px;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(0, 152, 234, 0.15);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">💎 Grid Lottery</div>
+      <div class="subtitle">Decentralized Web3 Entertainment on The Open Network (TON)</div>
+      <div class="badge">Privacy Policy</div>
+      <p style="margin-top: 8px; font-size: 13px;">Last updated: August 2026</p>
+    </div>
+
+    <h2>1. Introduction</h2>
+    <p>Grid Lottery ("we", "our", or "us") is dedicated to protecting your personal information and respecting your privacy. This Privacy Policy describes the types of data we collect through the Telegram Mini App and our smart integration with The Open Network (TON) blockchain.</p>
+
+    <h2>2. Information We Collect</h2>
+    <p>We believe in data minimization. We only collect the minimal information necessary to deliver seamless gaming functionality:</p>
+    <ul>
+      <li><strong>Telegram Profile Data:</strong> Public Telegram User ID, username, and first name provided securely via the official Telegram WebApp API.</li>
+      <li><strong>Public Blockchain Address:</strong> When you connect your wallet via <strong>TON Connect 2.0</strong>, we receive your public TON address (e.g., UQ... / EQ...) to verify deposits and deliver payouts.</li>
+      <li><strong>Gameplay Statistics:</strong> In-game records such as games played, winnings, and referral interactions.</li>
+    </ul>
+
+    <h2>3. What We Never Collect</h2>
+    <ul>
+      <li>We <strong>NEVER</strong> have access to your wallet private keys, seed phrases, or passwords.</li>
+      <li>We do not collect banking details, credit card numbers, or physical addresses.</li>
+    </ul>
+
+    <h2>4. How We Use Your Data</h2>
+    <p>The collected information is used solely to:</p>
+    <ul>
+      <li>Authenticate your session inside Telegram and prevent multi-account abuse.</li>
+      <li>Synchronize multiplayer room state, bets, and countdowns via Socket.IO.</li>
+      <li>Credit GRAM token deposits received through the TON blockchain.</li>
+      <li>Process withdrawal requests to your designated TON wallet address.</li>
+    </ul>
+
+    <h2>5. Data Security</h2>
+    <p>We implement industry-standard cryptographic verification (HMAC-SHA256 signature verification of Telegram initData) and secure Firebase Realtime Database rules to protect all stored game records against unauthorized access.</p>
+
+    <h2>6. Third-Party Services</h2>
+    <p>Our service interacts with:</p>
+    <ul>
+      <li><strong>The Open Network (TON):</strong> Public ledger where all blockchain transfers are permanently recorded.</li>
+      <li><strong>Telegram WebApp API:</strong> Used for secure user authentication and notification delivery.</li>
+      <li><strong>TonCenter / TON RPC:</strong> Used for checking on-chain deposit transactions.</li>
+    </ul>
+
+    <h2>7. Contact Us</h2>
+    <p>If you have any questions regarding this Privacy Policy, please contact our support team via Telegram: <a href="https://t.me/GridLottery_bot">@GridLottery_bot</a>.</p>
+
+    <div class="footer">
+      &copy; 2026 Grid Lottery • Built for The Open Network (TON) Ecosystem
+    </div>
+  </div>
+</body>
+</html>

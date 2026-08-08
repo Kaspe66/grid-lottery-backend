@@ -1,11 +1,11 @@
 {
-    "name": "grid_frontend",
-    "short_name": "grid_frontend",
+    "name": "Grid Lottery — TON & GRAM",
+    "short_name": "GridLottery",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0F172A",
+    "theme_color": "#0098EA",
+    "description": "Decentralized Web3 Lottery on The Open Network (TON) with GRAM token.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
